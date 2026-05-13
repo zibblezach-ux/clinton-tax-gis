@@ -42,14 +42,7 @@
 
 <script>
 
-var map = L.map('map').setView([39.60, -94.40], 10);
-
-var bounds = [
-    [39.42, -94.72],
-    [39.73, -94.20]
-];
-
-map.setMaxBounds(bounds);
+var map = L.map('map');
 
 L.tileLayer(
     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -70,7 +63,12 @@ fetch('/static/clinton_boundary.geojson')
             }
         }).addTo(map);
 
-        map.fitBounds(countyLayer.getBounds());
+        map.fitBounds(countyLayer.getBounds(), {
+            padding: [20, 20]
+        });
+
+        map.setMaxBounds(countyLayer.getBounds().pad(0.05));
+        map.options.maxBoundsViscosity = 1.0;
 
     });
 
