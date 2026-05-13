@@ -1,0 +1,702 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata>
+    <idinfo>
+        <citation>
+            <citeinfo>
+                <origin/>
+                <title>Townships</title>
+                <geoform>vector digital data</geoform>
+            </citeinfo>
+        </citation>
+        <descript>
+            <abstract>Townships are identified with both a township and range designation.  Townships are generally numbered from a north/sout baseline, designated as either north or south.  Ranges are generally numbered from an east/west baseline, designated as either east or west.   Townships are typically divided further into 1 mile sections.</abstract>
+            <purpose>Townships are typically a 6 mile square grid that is a subdivision of the public land survey system (PLSS).</purpose>
+        </descript>
+        <status>
+            <update>Irregular</update>
+        </status>
+        <spdom>
+            <bounding>
+                <westbc>-95.774885</westbc>
+                <eastbc>-88.898018</eastbc>
+                <northbc>40.620618</northbc>
+                <southbc>35.962393</southbc>
+            </bounding>
+        </spdom>
+        <keywords>
+            <theme>
+                <themekt>None</themekt>
+                <themekey>Township</themekey>
+                <themekey>PLSS</themekey>
+                <themekey>MOPLSS</themekey>
+            </theme>
+            <theme>
+                <themekt>ISO 19115 Topic Categories</themekt>
+                <themekey>boundaries</themekey>
+            </theme>
+        </keywords>
+        <accconst>None</accconst>
+        <useconst>Although all data in this data set have been compiled by the Missouri Department of Agriculture, no warranty, expressed or implied, is made by the department as to the accuracy of the data and related materials. The act of distribution shall not constitute any such warranty, and no responsibility is assumed by the department in the use of these data or related materials</useconst>
+        <ptcontac>
+            <cntinfo>
+                <cntorgp>
+                    <cntorg>Missouri Department of Agriculture, Division of Weights, Measures and Consumer Protection</cntorg>
+                    <cntper>Land Survey Program</cntper>
+                </cntorgp>
+                <cntaddr>
+                    <addrtype>mailing</addrtype>
+                    <address>P.O. Box 937</address>
+                    <address>1251 A Gale Drive</address>
+                    <city>Rolla</city>
+                    <state>Missouri</state>
+                    <postal>65402.0937</postal>
+                </cntaddr>
+                <cntvoice>537-368-2300</cntvoice>
+                <cntemail>landsurv@mda.mo.gov</cntemail>
+                <hours>Monday through Friday, 8 a.m. to 5 p.m. Central time</hours>
+            </cntinfo>
+        </ptcontac>
+        <datacred>Missouri Department of Agriculture, Land Survey Program</datacred>
+        <native>Esri ArcGIS 13.1.3.41833</native>
+    </idinfo>
+    <dataqual>
+        <lineage>
+            <procstep>
+                <procdesc>Corrections were made to the Missouri Public Land Survey System (PLSS) grid and simultaneously to the Township grid, county boundary and state boundary data sets.</procdesc>
+                <procdate>20180302</procdate>
+                <proccont>
+                    <cntinfo>
+                        <cntorgp>
+                            <cntorg>Missouri Department of Agriculture, Division of Weights, Measures and Consumer Protection</cntorg>
+                            <cntper>Land Survey Program</cntper>
+                        </cntorgp>
+                        <cntaddr>
+                            <addrtype>mailing</addrtype>
+                            <address>P.O. Box 937</address>
+                            <address>1251 A Gale Drive</address>
+                            <city>Rolla</city>
+                            <state>Missouri</state>
+                            <postal>65402.0937</postal>
+                        </cntaddr>
+                        <cntvoice>537-368-2300</cntvoice>
+                        <cntemail>landsurv@mda.mo.gov</cntemail>
+                        <hours>Monday through Friday, 8 a.m. to 5 p.m. Central time</hours>
+                    </cntinfo>
+                </proccont>
+            </procstep>
+            <procstep>
+                <procdesc>Corrections were made to the Missouri Public Land Survey System (PLSS) grid and simultaneously to the Township grid, county boundary and state boundary data sets.</procdesc>
+                <procdate>20231231</procdate>
+                <proccont>
+                    <cntinfo>
+                        <cntorgp>
+                            <cntorg>Missouri Department of Agriculture, Division of Weights, Measures and Consumer Protection</cntorg>
+                            <cntper>Land Survey Program</cntper>
+                        </cntorgp>
+                        <cntaddr>
+                            <addrtype>mailing</addrtype>
+                            <address>P.O. Box 937</address>
+                            <address>1251 A Gale Drive</address>
+                            <city>Rolla</city>
+                            <state>Missouri</state>
+                            <postal>65402.0937</postal>
+                        </cntaddr>
+                        <cntvoice>537-368-2300</cntvoice>
+                        <cntemail>landsurv@mda.mo.gov</cntemail>
+                        <hours>Monday through Friday, 8 a.m. to 5 p.m. Central time</hours>
+                    </cntinfo>
+                </proccont>
+            </procstep>
+        </lineage>
+    </dataqual>
+    <spdoinfo>
+        <direct>Vector</direct>
+        <ptvctinf>
+            <sdtsterm>
+                <sdtstype>GT-polygon composed of chains</sdtstype>
+                <ptvctcnt>5349</ptvctcnt>
+            </sdtsterm>
+        </ptvctinf>
+    </spdoinfo>
+    <eainfo>
+        <detailed>
+            <enttyp>
+                <enttypl>Townships</enttypl>
+            </enttyp>
+            <attr>
+                <attrlabl>OBJECTID</attrlabl>
+                <attrdef>Internal feature number.</attrdef>
+                <attrdefs>Esri</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>Sequential unique whole numbers that are automatically generated.</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>Shape</attrlabl>
+                <attrdef>Feature geometry.</attrdef>
+                <attrdefs>ESRI</attrdefs>
+                <attrdomv>
+                                        					
+                    
+                    <udom>Coordinates defining the features.</udom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>TWP_NUM</attrlabl>
+                <attrdef>Survey township number.</attrdef>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>0</edomv>
+                                                						
+                        
+                        <edomvd>indicates a Landgrant, not part of the rectangular survey.</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>1 - 67</edomv>
+                                                						
+                        
+                        <edomvd>indicates the township number</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>TWP_DIR</attrlabl>
+                <attrdef>Direction from survey baseline.</attrdef>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>N</edomv>
+                                                						
+                        
+                        <edomvd>North of survey baseline.</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>S</edomv>
+                                                						
+                        
+                        <edomvd>South of survey baseline.</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Blank</edomv>
+                                                						
+                        
+                        <edomvd>Landgrant, not part of the rectangular survey.</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>RNG_NUM</attrlabl>
+                <attrdef>Survey range number.</attrdef>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>0</edomv>
+                                                						
+                        
+                        <edomvd>indicates a Landgrant, not part of the rectangular survey.</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>1 - 43</edomv>
+                                                						
+                        
+                        <edomvd>indicates the range number</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>RNG_DIR</attrlabl>
+                <attrdef>Direction from principal meridian.</attrdef>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>E</edomv>
+                                                						
+                        
+                        <edomvd>East of principal meridian.</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>W</edomv>
+                                                						
+                        
+                        <edomvd>West of principal meridian.</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Blank</edomv>
+                                                						
+                        
+                        <edomvd>Landgrant, not part of the rectangular survey.</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>GRANT_NAME</attrlabl>
+                <attrdef>Named Landgrant that is contained within a GLO_SERIES of towns and villages surveyed by the General Land Office that are not part of the General GLO Series.</attrdef>
+            </attr>
+            <attr>
+                <attrlabl>OTHER_IDS</attrlabl>
+                <attrdef>Provides additional identification information where land grants overlap the PLSS grid and/or other land grants</attrdef>
+            </attr>
+            <attr>
+                <attrlabl>LABEL</attrlabl>
+                <attrdef>Concatenated string of TWP_TEXT, RNG_TEXT, and SEC_TEXT.</attrdef>
+            </attr>
+            <attr>
+                <attrlabl>COMMENTS</attrlabl>
+                <attrdef>Provides additional descriptive information about the polygon such as its position relative to the Missouri river (e.g. same section found on either side of the river), the type of land grant (i.e. school, road, town, military reservation), or land surveyed based on a different  grid origin (i.e. 6th principal meridian)</attrdef>
+            </attr>
+            <attr>
+                <attrlabl>GLO_SERIES</attrlabl>
+                <attrdef>Towns and Villages surveyed by the Genaral Land Office, each "Series" is numbered seperatly so that a tract is referred to as "Survey # ___" of the ___ Series. This provides information about which set of General Land Office surveys can be used to find a particular land grant</attrdef>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>General</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys of Landgrants that are platted in the General series of surveys conducted by the General Land Office.</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>blank</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys excluding Landgrants that are platted in the General series of surveys conducted by the General Land Office.</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Town of St. Louis</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Town of St. Louis</edomvd>
+                                                						
+                        
+                        <edomvds>
+T45N - R07E
+Land Survey microfilm location;
+721/1169 - 721/11688 (F-8) Explanations - St. Louis Lots (listed in Block order)
+721/12008 - 721/12057 (F-24) Field Notes Surveys in St. Louis
+721/12508 - 721/12558 (F-48) Brown's surveys in Old Town of St. Louis
+721/12084 - 721/12124 (F-26) Record of St. Louis Surveys
+</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Town of Carondelet</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Town of Carondelet</edomvd>
+                                                						
+                        
+                        <edomvds>
+T44N - R07E
+Land Survey microfilm location;
+721/11742 - 721/11760A1 (F-13) J.C. Brown's Plats &amp; Descriptions of Carondelet
+721/12164 - 721/12176 (F-30) Record Book Surveys Carondelet Lands
+</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Town of St. Charles</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Town of St. Charles</edomvd>
+                                                						
+                        
+                        <edomvds>
+T46N - R05E, T47N - R05E
+Land Survey microfilm location;
+721/12351 - 721/12402 (F-39) Brown's surveys in and near St. Charles
+</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Town of St. Genevieve</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Town of St. Genevieve</edomvd>
+                                                						
+                        
+                        <edomvds>T38N - R09E</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Village of New Bourbon</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Village of New Bourbon</edomvd>
+                                                						
+                        
+                        <edomvds>
+T37N - R09E, T38N - R09E
+Land Survey microfilm location;
+721/4419 - 721/4466 (F - 15) Brown's Surveys of Ste. Genevieve &amp; New Bourbon,
+720/1957 - 720/1987 Surveys of Ste. Genevieve &amp; New Bourbon. Roll #6
+720/2031 - 720/2063 Surveys of Ste. Genevieve &amp; New Bourbon. Roll #7
+</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Village of St. Ferdinand</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Village of St. Ferdinand</edomvd>
+                                                						
+                        
+                        <edomvds>
+T47N - R06E
+Land Survey microfilm location;
+721/11812 - 721/11830B1 (F-15) Surveys of St. Ferdinand
+721/11852B2 - 721/11865 (F-16) Record of Surveys - St. Ferdinand
+721/11866 - 721/11877 Record of St. Ferdinand Surveys
+</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Village a Robert</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Village a Robert (or Marais des Liards)</edomvd>
+                                                						
+                        
+                        <edomvds>
+T46N - R06E
+Land Survey microfilm location;
+721/11830B2 - 721/11835 (F-15) Surveys of Village a Robert
+721/11847A3 - 721/11852B1 (F-16) Record of Surveys - Village a Robert
+721/0126E06 Volume 21, pages 133-139
+</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Village of Portage Des Sioux</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Village of Portage Des Sioux</edomvd>
+                                                						
+                        
+                        <edomvds>
+T48N - R06E
+Land Survey microfilm location;
+721/11714 - 721/11731 (F-11) Brown's Surveys of Portage Des Sioux
+721/11773 - 721/11805A (F-14) Final Copies of Brown's Surveys of Portage des Sioux (Surveys 1-91)
+721/12058 - 721/12083 (F-25) Surveys of Portage des Sioux (Surveys 92-173)
+</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Village of New Madrid</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Village of New Madrid</edomvd>
+                                                						
+                        
+                        <edomvds>
+T22N - R14E
+Land Survey microfilm location;
+721/11732 - 721/11741 (F-12) J.C. Brown's Surveys of New Madrid
+</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Village of Little Prairie</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Village of Little Prairie</edomvd>
+                                                						
+                        
+                        <edomvds>T18N - R13E</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Village of Mine a Breton</edomv>
+                                                						
+                        
+                        <edomvd>A set of surveys that are platted in the Village of Mine a Breton</edomvd>
+                                                						
+                        
+                        <edomvds>
+T37N - R02E
+Land Survey microfilm location;
+721/11836 - 721/11847A2 (F-16) Record of Surveys - Mine a Breton
+</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>LABEL_1</attrlabl>
+                <attrdef>More commonly identifieable label, USS 329 instead of Landgrant00329, T56N R32W instead of T56NR32W.</attrdef>
+            </attr>
+            <attr>
+                <attrlabl>GlobalID</attrlabl>
+            </attr>
+            <attr>
+                <attrlabl>SHAPE_Length</attrlabl>
+                <attrdef>Length of feature in internal units.</attrdef>
+                <attrdefs>Esri</attrdefs>
+                <attrdomv>
+                                        
+                    <udom>Positive real numbers that are automatically generated.</udom>
+                                    
+                </attrdomv>
+            </attr>
+            <attr>
+                <attrlabl>SHAPE_Area</attrlabl>
+                <attrdef>Area of feature in internal units squared.</attrdef>
+                <attrdefs>Esri</attrdefs>
+                <attrdomv>
+                                        
+                    <udom>Positive real numbers that are automatically generated.</udom>
+                                    
+                </attrdomv>
+            </attr>
+        </detailed>
+    </eainfo>
+    <distinfo>
+        <distliab>See access and use constraints information.</distliab>
+        <stdorder>
+            <digform>
+                <digtinfo>
+                    <formname>Shapefile</formname>
+                    <transize>2.642</transize>
+                </digtinfo>
+                <digtopt>
+                    <onlinopt/>
+                </digtopt>
+            </digform>
+        </stdorder>
+    </distinfo>
+    <metainfo>
+        <metd>20240408</metd>
+        <metc>
+            <cntinfo>
+                <cntorgp>
+                    <cntorg>Missouri Department of Agriculture, Division of Weights, Measures and Consumer Protection</cntorg>
+                    <cntper>Land Survey Program</cntper>
+                </cntorgp>
+                <cntaddr>
+                    <addrtype>mailing</addrtype>
+                    <address>P.O. Box 937</address>
+                    <address>1251 A Gale Drive</address>
+                    <city>Rolla</city>
+                    <state>Missouri</state>
+                    <postal>65402.0937</postal>
+                </cntaddr>
+                <cntvoice>537-368-2300</cntvoice>
+                <cntemail>landsurv@mda.mo.gov</cntemail>
+                <hours>Monday through Friday, 8 a.m. to 5 p.m. Central time</hours>
+            </cntinfo>
+        </metc>
+        <metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+        <metstdv>FGDC-STD-001-1998</metstdv>
+        <mettc>local time</mettc>
+    </metainfo>
+</metadata>
