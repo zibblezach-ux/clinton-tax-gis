@@ -58,6 +58,22 @@ L.tileLayer(
     }
 ).addTo(map);
 
+fetch('/static/clinton_boundary.geojson')
+    .then(response => response.json())
+    .then(data => {
+
+        var countyLayer = L.geoJSON(data, {
+            style: {
+                color: 'red',
+                weight: 3,
+                fillOpacity: 0.05
+            }
+        }).addTo(map);
+
+        map.fitBounds(countyLayer.getBounds());
+
+    });
+
 </script>
 
 </body>
