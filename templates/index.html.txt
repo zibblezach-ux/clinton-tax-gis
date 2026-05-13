@@ -41,7 +41,15 @@
 <div id="map"></div>
 
 <script>
-    var map = L.map('map').setView([39.53, -94.52], 10);
+    var bounds = [
+    [39.42, -94.72],
+    [39.73, -94.20]
+];
+
+var map = L.map('map', {
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0
+}).fitBounds(bounds);
 
     L.tileLayer(
         'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
