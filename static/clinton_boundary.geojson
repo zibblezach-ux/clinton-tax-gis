@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Clinton County"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.72,39.42],
+          [-94.20,39.42],
+          [-94.20,39.73],
+          [-94.72,39.73],
+          [-94.72,39.42]
+        ]]
+      }
+    }
+  ]
+}
