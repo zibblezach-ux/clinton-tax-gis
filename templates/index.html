@@ -112,8 +112,8 @@
   </div>
 
   Property and infrastructure GIS viewer using:
-  roads, flood zones, cities, townships, school
-  districts, and county limits.
+  roads, flood zones, cities, townships,
+  school districts, and county limits.
 
 </div>
 
@@ -215,6 +215,7 @@ async function loadMap() {
 
   } catch (err) {
 
+    console.log(err);
     console.log('Road layer not loaded');
 
   }
@@ -277,6 +278,7 @@ async function loadMap() {
 
   } catch (err) {
 
+    console.log(err);
     console.log('Cities layer not loaded');
 
   }
@@ -325,6 +327,7 @@ async function loadMap() {
 
   } catch (err) {
 
+    console.log(err);
     console.log('Township layer not loaded');
 
   }
@@ -379,6 +382,7 @@ async function loadMap() {
 
   } catch (err) {
 
+    console.log(err);
     console.log('Flood layer not loaded');
 
   }
@@ -389,10 +393,12 @@ async function loadMap() {
   try {
 
     const schoolResponse =
-      await fetch('./static/schooldistricts/school_districts.geojson');
+      await fetch('./static/school_districts/school_districts.geojson');
 
     const schoolData =
       await schoolResponse.json();
+
+    console.log('School district data loaded');
 
     schoolLayer = L.geoJSON(schoolData, {
 
@@ -430,6 +436,8 @@ async function loadMap() {
 
     });
 
+    schoolLayer.addTo(map);
+
   } catch (err) {
 
     console.log(err);
@@ -445,8 +453,6 @@ async function loadMap() {
   if (citiesLayer) citiesLayer.addTo(map);
 
   if (townshipsLayer) townshipsLayer.addTo(map);
-
-  if (schoolLayer) schoolLayer.addTo(map);
 
 
   // OVERLAY CONTROLS
