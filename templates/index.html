@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -46,25 +45,6 @@
       color: #4b0082;
       font-size: 12px;
       font-weight: bold;
-    }
-
-    .district-label {
-      background: rgba(255,255,255,0.7);
-      border: none;
-      box-shadow: none;
-      color: #006600;
-      font-size: 11px;
-      font-weight: bold;
-      padding: 2px;
-    }
-
-    .legend {
-      background: white;
-      padding: 10px;
-      line-height: 1.6;
-      border-radius: 5px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.4);
-      font-size: 13px;
     }
 
     .info-panel {
@@ -122,9 +102,7 @@
     Clinton County GIS
   </div>
 
-  Property and infrastructure GIS viewer using:
-  roads, flood zones, cities, townships,
-  school districts, county limits, and parcels.
+  Parcel-enabled county GIS prototype.
 
 </div>
 
@@ -160,40 +138,38 @@ let floodLayer;
 let schoolLayer;
 let parcelLayer = L.layerGroup();
 
-function mercatorToLatLng(x, y) {
-
-  const lng = (x / 20037508.34) * 180;
-
-  let lat = (y / 20037508.34) * 180;
-
-  lat =
-    (180 / Math.PI) *
-    (2 * Math.atan(Math.exp(lat * Math.PI / 180)) - Math.PI / 2);
-
-  return [lat, lng];
-
-}
-
 async function loadMap() {
 
-  const countyResponse =
-    await fetch('./static/clinton_boundary.geojson');
+  // COUNTY
 
-  const countyData =
-    await countyResponse.json();
+  try {
 
-  countyLayer = L.geoJSON(countyData, {
+    const countyResponse =
+      await fetch('./static/clinton_boundary.geojson');
 
-    style: {
-      color: '#ff0000',
-      weight: 3,
-      fillOpacity: 0.02
-    }
+    const countyData =
+      await countyResponse.json();
 
-  }).addTo(map);
+    countyLayer = L.geoJSON(countyData, {
 
-  map.fitBounds(countyLayer.getBounds());
+      style: {
+        color: '#ff0000',
+        weight: 3,
+        fillOpacity: 0.02
+      }
 
+    }).addTo(map);
+
+    map.fitBounds(countyLayer.getBounds());
+
+  } catch (err) {
+
+    console.log(err);
+
+  }
+
+
+  // ROADS
 
   try {
 
@@ -220,6 +196,8 @@ async function loadMap() {
 
   }
 
+
+  // CITIES
 
   try {
 
@@ -276,6 +254,8 @@ async function loadMap() {
   }
 
 
+  // TOWNSHIPS
+
   try {
 
     const townshipResponse =
@@ -305,6 +285,8 @@ async function loadMap() {
   }
 
 
+  // FLOOD ZONES
+
   try {
 
     const floodResponse =
@@ -332,6 +314,8 @@ async function loadMap() {
 
   }
 
+
+  // SCHOOL DISTRICTS
 
   try {
 
@@ -372,6 +356,8 @@ async function loadMap() {
     const parcelData =
       await parcelResponse.json();
 
+    console.log('Parcel count:', parcelData.data.length);
+
     parcelData.data.forEach(parcel => {
 
       const d = parcel.data;
@@ -383,24 +369,22 @@ async function loadMap() {
         parcel.__ymax
       ) {
 
-        const southwest =
-          mercatorToLatLng(
-            parcel.__xmin,
-            parcel.__ymin
+        const sw =
+          L.Projection.SphericalMercator.unproject(
+            L.point(parcel.__xmin, parcel.__ymin)
           );
 
-        const northeast =
-          mercatorToLatLng(
-            parcel.__xmax,
-            parcel.__ymax
+        const ne =
+          L.Projection.SphericalMercator.unproject(
+            L.point(parcel.__xmax, parcel.__ymax)
           );
 
         const rect = L.rectangle(
-          [southwest, northeast],
+          [sw, ne],
           {
             color: '#ff7800',
-            weight: 0.5,
-            fillOpacity: 0.08
+            weight: 0.4,
+            fillOpacity: 0.05
           }
         );
 
@@ -419,14 +403,19 @@ async function loadMap() {
   } catch (err) {
 
     console.log(err);
-    console.log('Parcel layer not loaded');
+    console.log('Parcel layer failed');
 
   }
 
 
+  // DEFAULT LAYERS
+
   if (roadsLayer) roadsLayer.addTo(map);
   if (citiesLayer) citiesLayer.addTo(map);
   if (townshipsLayer) townshipsLayer.addTo(map);
+
+
+  // LAYER CONTROL
 
   const overlays = {};
 
