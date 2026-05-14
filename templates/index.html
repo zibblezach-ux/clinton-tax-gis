@@ -112,8 +112,8 @@
   </div>
 
   Property and infrastructure GIS viewer using:
-  roads, flood zones, cities, townships,
-  school districts, and county limits.
+  roads, flood zones, cities, townships, school
+  districts, and county limits.
 
 </div>
 
@@ -152,9 +152,11 @@ async function loadMap() {
 
   // COUNTY BOUNDARY
 
-  const countyResponse = await fetch('./static/clinton_boundary.geojson');
+  const countyResponse =
+    await fetch('./static/clinton_boundary.geojson');
 
-  const countyData = await countyResponse.json();
+  const countyData =
+    await countyResponse.json();
 
   countyLayer = L.geoJSON(countyData, {
 
@@ -176,7 +178,8 @@ async function loadMap() {
     const roadsResponse =
       await fetch('./static/Roads/roads.geojson');
 
-    const roadsData = await roadsResponse.json();
+    const roadsData =
+      await roadsResponse.json();
 
     roadsLayer = L.geoJSON(roadsData, {
 
@@ -224,7 +227,8 @@ async function loadMap() {
     const citiesResponse =
       await fetch('./static/Cities/cities.geojson');
 
-    const citiesData = await citiesResponse.json();
+    const citiesData =
+      await citiesResponse.json();
 
     citiesLayer = L.geoJSON(citiesData, {
 
@@ -285,7 +289,8 @@ async function loadMap() {
     const townshipResponse =
       await fetch('./static/Townships/townships.geojson');
 
-    const townshipData = await townshipResponse.json();
+    const townshipData =
+      await townshipResponse.json();
 
     townshipsLayer = L.geoJSON(townshipData, {
 
@@ -303,12 +308,13 @@ async function loadMap() {
 
       },
 
-      onEachFeature: function (feature, layer) {
+      onEachFeature: function(feature, layer) {
 
         if (feature.properties && feature.properties.NAME) {
 
           layer.bindPopup(
-            'Township: ' + feature.properties.NAME
+            'Township: ' +
+            feature.properties.NAME
           );
 
         }
@@ -331,7 +337,8 @@ async function loadMap() {
     const floodResponse =
       await fetch('./static/Floodzones/floodzones.geojson');
 
-    const floodData = await floodResponse.json();
+    const floodData =
+      await floodResponse.json();
 
     floodLayer = L.geoJSON(floodData, {
 
@@ -384,7 +391,8 @@ async function loadMap() {
     const schoolResponse =
       await fetch('./static/schooldistricts/school_districts.geojson');
 
-    const schoolData = await schoolResponse.json();
+    const schoolData =
+      await schoolResponse.json();
 
     schoolLayer = L.geoJSON(schoolData, {
 
@@ -404,10 +412,16 @@ async function loadMap() {
 
       onEachFeature: function(feature, layer) {
 
-        if (feature.properties && feature.properties.NAME) {
+        if (feature.properties) {
+
+          const districtName =
+            feature.properties.NAME ||
+            feature.properties.NAMELSAD ||
+            feature.properties.DIST_NAME ||
+            'School District';
 
           layer.bindPopup(
-            'School District: ' + feature.properties.NAME
+            'School District: ' + districtName
           );
 
         }
@@ -418,6 +432,7 @@ async function loadMap() {
 
   } catch (err) {
 
+    console.log(err);
     console.log('School district layer not loaded');
 
   }
