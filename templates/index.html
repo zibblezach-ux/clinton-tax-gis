@@ -11,7 +11,6 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 
   <style>
     html, body {
@@ -34,21 +33,33 @@
       overflow-y: auto;
     }
 
+    .city-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: #4b0082;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
     .info-panel {
       position: absolute;
       top: 10px;
       left: 60px;
       z-index: 1000;
+
       background: rgba(255,255,255,0.95);
       padding: 10px 14px;
       border-radius: 6px;
       box-shadow: 0 0 8px rgba(0,0,0,0.3);
       font-size: 14px;
+      max-width: 280px;
     }
 
     .info-title {
       font-weight: bold;
       font-size: 16px;
+      margin-bottom: 6px;
     }
   </style>
 </head>
@@ -57,18 +68,15 @@
 
 <div class="info-panel">
   <div class="info-title">Clinton County GIS</div>
-  Tax concentration heatmap system
+  Base infrastructure GIS viewer
 </div>
 
 <div id="map"></div>
 
 <script>
 
-const map = L.map('map', {
-  preferCanvas: true
-});
+const map = L.map('map');
 
-// ALWAYS ADD BASE TILE FIRST
 const osm = L.tileLayer(
   'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   {
@@ -78,86 +86,158 @@ const osm = L.tileLayer(
 ).addTo(map);
 
 L.control.scale().addTo(map);
-L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 
-let heatLayer;
-let heatPoints = [];
+L.Control.geocoder({
+  defaultMarkGeocode: true
+}).addTo(map);
 
-let overlays = {};
+let countyLayer;
+let roadsLayer;
+let citiesLayer;
+let townshipsLayer;
+let floodLayer;
+let schoolLayer;
 
-async function load() {
+async function loadMap() {
 
-  // ---------------------------
-  // PARCEL HEATMAP (SAFE MODE)
-  // ---------------------------
-
+  // COUNTY
   try {
+    const res = await fetch('./static/clinton_boundary.geojson');
+    const data = await res.json();
 
-    const res = await fetch('./static/data/clinton_parcels.json');
-    const json = await res.json();
-
-    const parcels =
-      Array.isArray(json) ? json :
-      Array.isArray(json.data) ? json.data :
-      [];
-
-    for (const p of parcels) {
-
-      const xmin = Number(p.__xmin);
-      const xmax = Number(p.__xmax);
-      const ymin = Number(p.__ymin);
-      const ymax = Number(p.__ymax);
-
-      if (
-        !isFinite(xmin) ||
-        !isFinite(xmax) ||
-        !isFinite(ymin) ||
-        !isFinite(ymax)
-      ) continue;
-
-      const cx = (xmin + xmax) / 2;
-      const cy = (ymin + ymax) / 2;
-
-      // robust weight (fallback-safe)
-      let weight = 1;
-
-      const d = p.data || {};
-
-      const tax =
-        Number(d.tax_value) ||
-        Number(d.assessed) ||
-        Number(d.market_value) ||
-        Number(d.land_val) ||
-        Number(d.improv_val);
-
-      if (isFinite(tax) && tax > 0) {
-        weight = tax;
-      } else {
-        const ac = Number(d.deeded_acr);
-        weight = (isFinite(ac) ? ac : 1) * 1000;
+    countyLayer = L.geoJSON(data, {
+      style: {
+        color: '#ff0000',
+        weight: 3,
+        fillOpacity: 0.02
       }
+    }).addTo(map);
 
-      heatPoints.push([cy, cx, weight]);
-    }
+    map.fitBounds(countyLayer.getBounds());
 
-    if (heatPoints.length > 0 && L.heatLayer) {
-
-      heatLayer = L.heatLayer(heatPoints, {
-        radius: 25,
-        blur: 30,
-        maxZoom: 17
-      }).addTo(map);
-
-      overlays["Tax Heatmap"] = heatLayer;
-    }
-
-  } catch (e) {
-    console.log("Heat layer failed", e);
+  } catch (err) {
+    console.log(err);
   }
 
-  // ---------------------------
-  // LAYER CONTROL (ALWAYS LAST)
-  // ---------------------------
+
+  // ROADS
+  try {
+    const res = await fetch('./static/Roads/roads.geojson');
+    const data = await res.json();
+
+    roadsLayer = L.geoJSON(data, {
+      style: {
+        color: '#666666',
+        weight: 0.7,
+        opacity: 0.35,
+        dashArray: '3,3'
+      }
+    }).addTo(map);
+
+  } catch (err) {
+    console.log(err);
+  }
+
+
+  // CITIES
+  try {
+    const res = await fetch('./static/Cities/cities.geojson');
+    const data = await res.json();
+
+    citiesLayer = L.geoJSON(data, {
+
+      pointToLayer: (f, latlng) =>
+        L.circleMarker(latlng, {
+          radius: 5,
+          fillColor: '#7a00cc',
+          color: '#000',
+          weight: 1,
+          fillOpacity: 0.85
+        }),
+
+      onEachFeature: (f, layer) => {
+        if (f.properties?.NAME) {
+          layer.bindTooltip(f.properties.NAME, {
+            permanent: true,
+            className: 'city-label'
+          });
+        }
+      }
+
+    }).addTo(map);
+
+  } catch (err) {
+    console.log(err);
+  }
+
+
+  // TOWNSHIPS
+  try {
+    const res = await fetch('./static/Townships/townships.geojson');
+    const data = await res.json();
+
+    townshipsLayer = L.geoJSON(data, {
+      style: {
+        color: '#7aa6ff',
+        weight: 1,
+        dashArray: '2,6',
+        opacity: 0.45,
+        fillOpacity: 0
+      }
+    }).addTo(map);
+
+  } catch (err) {
+    console.log(err);
+  }
+
+
+  // FLOOD ZONES
+  try {
+    const res = await fetch('./static/Floodzones/floodzones.geojson');
+    const data = await res.json();
+
+    floodLayer = L.geoJSON(data, {
+      style: {
+        color: '#00aaff',
+        weight: 1,
+        fillColor: '#00ccff',
+        fillOpacity: 0.20
+      }
+    });
+
+  } catch (err) {
+    console.log(err);
+  }
+
+
+  // SCHOOL DISTRICTS
+  try {
+    const res = await fetch('./static/school_districts/school_districts.geojson');
+    const data = await res.json();
+
+    schoolLayer = L.geoJSON(data, {
+      style: {
+        color: '#008800',
+        weight: 3,
+        opacity: 0.9,
+        dashArray: '8,4',
+        fillOpacity: 0.02
+      }
+    });
+
+  } catch (err) {
+    console.log(err);
+  }
+
+
+  // LAYER CONTROL
+  const overlays = {
+    "Roads": roadsLayer,
+    "Cities": citiesLayer,
+    "Townships": townshipsLayer,
+    "Flood Zones": floodLayer,
+    "School Districts": schoolLayer
+  };
 
   L.control.layers(
     { "OpenStreetMap": osm },
@@ -167,7 +247,7 @@ async function load() {
 
 }
 
-load();
+loadMap();
 
 </script>
 
