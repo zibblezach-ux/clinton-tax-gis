@@ -54,15 +54,10 @@
       z-index: 1000;
 
       background: rgba(255,255,255,0.95);
-
       padding: 10px 14px;
-
       border-radius: 6px;
-
       box-shadow: 0 0 8px rgba(0,0,0,0.3);
-
       max-width: 280px;
-
       font-size: 14px;
     }
 
@@ -83,14 +78,13 @@
     Clinton County GIS
   </div>
 
-  Parcel-enabled county GIS prototype.
+  County infrastructure GIS viewer (roads, towns, zoning layers).
 
 </div>
 
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
 <script>
@@ -119,132 +113,89 @@ let citiesLayer;
 let townshipsLayer;
 let floodLayer;
 let schoolLayer;
-let parcelLayer = L.layerGroup();
 
 async function loadMap() {
 
-  // COUNTY
-
+  // COUNTY BOUNDARY
   try {
+    const res = await fetch('./static/clinton_boundary.geojson');
+    const data = await res.json();
 
-    const countyResponse =
-      await fetch('./static/clinton_boundary.geojson');
-
-    const countyData =
-      await countyResponse.json();
-
-    countyLayer = L.geoJSON(countyData, {
-
+    countyLayer = L.geoJSON(data, {
       style: {
         color: '#ff0000',
         weight: 3,
         fillOpacity: 0.02
       }
-
     }).addTo(map);
 
     map.fitBounds(countyLayer.getBounds());
 
   } catch (err) {
-
-    console.log('County load failed', err);
-
+    console.log('County failed', err);
   }
 
 
   // ROADS
-
   try {
+    const res = await fetch('./static/Roads/roads.geojson');
+    const data = await res.json();
 
-    const roadsResponse =
-      await fetch('./static/Roads/roads.geojson');
-
-    const roadsData =
-      await roadsResponse.json();
-
-    roadsLayer = L.geoJSON(roadsData, {
-
+    roadsLayer = L.geoJSON(data, {
       style: {
         color: '#666666',
         weight: 0.7,
         opacity: 0.35,
         dashArray: '3,3'
       }
-
     }).addTo(map);
 
   } catch (err) {
-
     console.log('Roads failed', err);
-
   }
 
 
   // CITIES
-
   try {
+    const res = await fetch('./static/Cities/cities.geojson');
+    const data = await res.json();
 
-    const citiesResponse =
-      await fetch('./static/Cities/cities.geojson');
-
-    const citiesData =
-      await citiesResponse.json();
-
-    citiesLayer = L.geoJSON(citiesData, {
+    citiesLayer = L.geoJSON(data, {
 
       pointToLayer: function(feature, latlng) {
-
         return L.circleMarker(latlng, {
-
           radius: 5,
           fillColor: '#7a00cc',
           color: '#000',
           weight: 1,
           opacity: 1,
           fillOpacity: 0.85
-
         });
-
       },
 
       onEachFeature: function(feature, layer) {
-
-        if (feature.properties && feature.properties.NAME) {
-
-          layer.bindTooltip(
-            feature.properties.NAME,
-            {
-              permanent: true,
-              direction: 'top',
-              className: 'city-label'
-            }
-          );
-
+        if (feature.properties?.NAME) {
+          layer.bindTooltip(feature.properties.NAME, {
+            permanent: true,
+            direction: 'top',
+            className: 'city-label'
+          });
         }
-
       }
 
     }).addTo(map);
 
   } catch (err) {
-
     console.log('Cities failed', err);
-
   }
 
 
   // TOWNSHIPS
-
   try {
+    const res = await fetch('./static/Townships/townships.geojson');
+    const data = await res.json();
 
-    const townshipResponse =
-      await fetch('./static/Townships/townships.geojson');
-
-    const townshipData =
-      await townshipResponse.json();
-
-    townshipsLayer = L.geoJSON(townshipData, {
-
+    townshipsLayer = L.geoJSON(data, {
       style: {
         color: '#7aa6ff',
         weight: 1,
@@ -252,56 +203,38 @@ async function loadMap() {
         opacity: 0.45,
         fillOpacity: 0
       }
-
     }).addTo(map);
 
   } catch (err) {
-
     console.log('Townships failed', err);
-
   }
 
 
   // FLOOD ZONES
-
   try {
+    const res = await fetch('./static/Floodzones/floodzones.geojson');
+    const data = await res.json();
 
-    const floodResponse =
-      await fetch('./static/Floodzones/floodzones.geojson');
-
-    const floodData =
-      await floodResponse.json();
-
-    floodLayer = L.geoJSON(floodData, {
-
+    floodLayer = L.geoJSON(data, {
       style: {
         color: '#00aaff',
         weight: 1,
         fillColor: '#00ccff',
         fillOpacity: 0.20
       }
-
     });
 
   } catch (err) {
-
     console.log('Flood zones failed', err);
-
   }
 
 
   // SCHOOL DISTRICTS
-
   try {
+    const res = await fetch('./static/school_districts/school_districts.geojson');
+    const data = await res.json();
 
-    const schoolResponse =
-      await fetch('./static/school_districts/school_districts.geojson');
-
-    const schoolData =
-      await schoolResponse.json();
-
-    schoolLayer = L.geoJSON(schoolData, {
-
+    schoolLayer = L.geoJSON(data, {
       style: {
         color: '#008800',
         weight: 3,
@@ -309,134 +242,26 @@ async function loadMap() {
         dashArray: '8,4',
         fillOpacity: 0.02
       }
-
     });
 
   } catch (err) {
-
     console.log('School districts failed', err);
-
   }
 
 
-  // PARCELS
-
-  try {
-
-    const parcelResponse =
-      await fetch('./static/data/clinton_parcels.json');
-
-    const parcelData =
-      await parcelResponse.json();
-
-    console.log('Parcel count:', parcelData.data.length);
-
-    parcelData.data.forEach(parcel => {
-
-      const d = parcel.data;
-
-      if (
-        parcel.__xmin != null &&
-        parcel.__xmax != null &&
-        parcel.__ymin != null &&
-        parcel.__ymax != null
-      ) {
-
-        // normalize values
-
-        const xmin =
-          Math.min(parcel.__xmin, parcel.__xmax);
-
-        const xmax =
-          Math.max(parcel.__xmin, parcel.__xmax);
-
-        const ymin =
-          Math.min(parcel.__ymin, parcel.__ymax);
-
-        const ymax =
-          Math.max(parcel.__ymin, parcel.__ymax);
-
-        // reject absurd values
-
-        if (
-          !isFinite(xmin) ||
-          !isFinite(xmax) ||
-          !isFinite(ymin) ||
-          !isFinite(ymax)
-        ) {
-          return;
-        }
-
-        const sw =
-          L.Projection.SphericalMercator.unproject(
-            L.point(xmin, ymin)
-          );
-
-        const ne =
-          L.Projection.SphericalMercator.unproject(
-            L.point(xmax, ymax)
-          );
-
-        // reject impossible bounds
-
-        if (
-          sw.lat < 35 ||
-          sw.lat > 41 ||
-          ne.lat < 35 ||
-          ne.lat > 41
-        ) {
-          return;
-        }
-
-        const rect = L.rectangle(
-          [sw, ne],
-          {
-            color: '#ff7800',
-            weight: 0.4,
-            fillOpacity: 0.05
-          }
-        );
-
-        rect.bindPopup(`
-          <b>Parcel:</b> ${d.parcel_num || ''}<br>
-          <b>Owner:</b> ${d.deedholder || ''}<br>
-          <b>Address:</b> ${d.siteaddres || ''}
-        `);
-
-        parcelLayer.addLayer(rect);
-
-      }
-
-    });
-
-  } catch (err) {
-
-    console.log('Parcel layer failed', err);
-
-  }
-
-
-  // LAYER CONTROLS
-
+  // LAYER CONTROL (NO PARCELS)
   const overlays = {
-
     "Roads": roadsLayer,
     "Cities": citiesLayer,
     "Townships": townshipsLayer,
     "Flood Zones": floodLayer,
-    "School Districts": schoolLayer,
-    "Parcels": parcelLayer
-
+    "School Districts": schoolLayer
   };
 
   L.control.layers(
-    {
-      "OpenStreetMap": osm
-    },
+    { "OpenStreetMap": osm },
     overlays,
-    {
-      collapsed: false
-    }
+    { collapsed: false }
   ).addTo(map);
 
 }
