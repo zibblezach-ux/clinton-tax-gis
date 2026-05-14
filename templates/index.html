@@ -28,6 +28,15 @@
     .leaflet-control-layers {
       font-size: 14px;
     }
+
+    .township-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: blue;
+      font-size: 12px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -82,6 +91,7 @@ async function loadMap() {
         weight: 1
       }
     });
+
   } catch (err) {
     console.log('Road layer not loaded');
   }
@@ -99,6 +109,7 @@ async function loadMap() {
         fillOpacity: 0.1
       }
     });
+
   } catch (err) {
     console.log('Cities layer not loaded');
   }
@@ -110,13 +121,30 @@ async function loadMap() {
     const townshipData = await townshipResponse.json();
 
     townshipsLayer = L.geoJSON(townshipData, {
+
       style: {
         color: '#0066ff',
         weight: 2,
         dashArray: '4,4',
         fillOpacity: 0
+      },
+
+      onEachFeature: function (feature, layer) {
+
+        if (feature.properties && feature.properties.LABEL) {
+
+          layer.bindTooltip(feature.properties.LABEL, {
+            permanent: true,
+            direction: 'center',
+            className: 'township-label'
+          });
+
+        }
+
       }
+
     });
+
   } catch (err) {
     console.log('Township layer not loaded');
   }
@@ -135,6 +163,7 @@ async function loadMap() {
         fillOpacity: 0.25
       }
     });
+
   } catch (err) {
     console.log('Flood layer not loaded');
   }
