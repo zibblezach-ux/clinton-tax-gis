@@ -189,8 +189,10 @@ async function loadMap() {
     roadsLayer = L.geoJSON(roadsData, {
 
       style: {
-        color: '#444444',
-        weight: 1
+        color: '#666666',
+        weight: 0.7,
+        opacity: 0.45,
+        dashArray: '3,3'
       },
 
       onEachFeature: function(feature, layer) {
@@ -447,7 +449,7 @@ async function loadMap() {
       <span style="color:#ff0000;">━━</span>
       County Boundary<br>
 
-      <span style="color:#444444;">━━</span>
+      <span style="color:#666666;">━━</span>
       Roads<br>
 
       <span style="color:#0066ff;">━━</span>
