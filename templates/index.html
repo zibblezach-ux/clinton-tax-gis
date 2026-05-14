@@ -38,15 +38,6 @@
       overflow-y: auto;
     }
 
-    .township-label {
-      background: transparent;
-      border: none;
-      box-shadow: none;
-      color: blue;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
     .city-label {
       background: transparent;
       border: none;
@@ -120,8 +111,8 @@
     Clinton County GIS
   </div>
 
-  Layered county GIS viewer using:
-  roads, flood zones, cities, township boundaries,
+  Property and infrastructure GIS viewer using:
+  roads, flood zones, cities, townships,
   school districts, and county limits.
 
 </div>
@@ -170,7 +161,7 @@ async function loadMap() {
     style: {
       color: '#ff0000',
       weight: 3,
-      fillOpacity: 0.03
+      fillOpacity: 0.02
     }
 
   }).addTo(map);
@@ -192,7 +183,7 @@ async function loadMap() {
       style: {
         color: '#666666',
         weight: 0.7,
-        opacity: 0.45,
+        opacity: 0.35,
         dashArray: '3,3'
       },
 
@@ -241,7 +232,7 @@ async function loadMap() {
 
         return L.circleMarker(latlng, {
 
-          radius: 6,
+          radius: 5,
 
           fillColor: '#7a00cc',
 
@@ -251,7 +242,7 @@ async function loadMap() {
 
           opacity: 1,
 
-          fillOpacity: 0.8
+          fillOpacity: 0.85
 
         });
 
@@ -300,11 +291,13 @@ async function loadMap() {
 
       style: {
 
-        color: '#0066ff',
+        color: '#7aa6ff',
 
-        weight: 2,
+        weight: 1,
 
-        dashArray: '4,4',
+        dashArray: '2,6',
+
+        opacity: 0.45,
 
         fillOpacity: 0
 
@@ -316,15 +309,6 @@ async function loadMap() {
 
           layer.bindPopup(
             'Township: ' + feature.properties.NAME
-          );
-
-          layer.bindTooltip(
-            feature.properties.NAME,
-            {
-              permanent: true,
-              direction: 'center',
-              className: 'township-label'
-            }
           );
 
         }
@@ -359,7 +343,7 @@ async function loadMap() {
 
         fillColor: '#00ccff',
 
-        fillOpacity: 0.25
+        fillOpacity: 0.20
 
       },
 
@@ -408,11 +392,13 @@ async function loadMap() {
 
         color: '#008800',
 
-        weight: 2,
+        weight: 3,
+
+        opacity: 0.9,
 
         dashArray: '8,4',
 
-        fillOpacity: 0.03
+        fillOpacity: 0.02
 
       },
 
@@ -444,6 +430,8 @@ async function loadMap() {
   if (citiesLayer) citiesLayer.addTo(map);
 
   if (townshipsLayer) townshipsLayer.addTo(map);
+
+  if (schoolLayer) schoolLayer.addTo(map);
 
 
   // OVERLAY CONTROLS
@@ -500,7 +488,7 @@ async function loadMap() {
       <span style="color:#666666;">━━</span>
       Roads<br>
 
-      <span style="color:#0066ff;">━━</span>
+      <span style="color:#7aa6ff;">━━</span>
       Townships<br>
 
       <span style="color:#00aaff;">━━</span>
