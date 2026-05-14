@@ -1,307 +1,475 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <title>Clinton County GIS</title>
 
-<title>Clinton County GIS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
 
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
-/>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+  />
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
 
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
-<style>
-
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    font-family: Arial, sans-serif;
-}
-
-#container {
-    display: flex;
-    height: 100%;
-}
-
-#sidebar {
-    width: 300px;
-    background: #f4f4f4;
-    padding: 15px;
-    overflow-y: auto;
-    border-right: 1px solid #ccc;
-}
-
-#map {
-    flex-grow: 1;
-    height: 100%;
-}
-
-.sidebar-title {
-    font-size: 22px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.sidebar-section {
-    margin-bottom: 20px;
-}
-
-.legend {
-    background: white;
-    padding: 10px;
-    line-height: 1.6;
-    border-radius: 5px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.3);
-}
-
-.city-label {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    font-size: 12px;
-    font-weight: bold;
-    color: black;
-}
-
-@media (max-width: 768px) {
-
-    #container {
-        flex-direction: column;
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
     }
 
-    #sidebar {
-        width: 100%;
-        height: 180px;
-        border-right: none;
-        border-bottom: 1px solid #ccc;
+    #map {
+      width: 100%;
+      height: 100vh;
     }
-}
 
-</style>
+    .leaflet-control-layers {
+      font-size: 14px;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    .township-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: blue;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .city-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: #4b0082;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .legend {
+      background: white;
+      padding: 10px;
+      line-height: 1.6;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.4);
+      font-size: 13px;
+    }
+
+    .info-panel {
+      position: absolute;
+      top: 10px;
+      left: 60px;
+      z-index: 1000;
+
+      background: rgba(255,255,255,0.95);
+
+      padding: 10px 14px;
+
+      border-radius: 6px;
+
+      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+
+      max-width: 280px;
+
+      font-size: 14px;
+    }
+
+    .info-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 768px) {
+
+      .info-panel {
+
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+
+        max-width: 220px;
+
+        font-size: 12px;
+      }
+
+      .leaflet-control-layers {
+        font-size: 12px;
+      }
+
+    }
+
+  </style>
 </head>
 
 <body>
 
-<div id="container">
+<div class="info-panel">
 
-    <div id="sidebar">
+  <div class="info-title">
+    Clinton County GIS
+  </div>
 
-        <div class="sidebar-title">
-            Clinton County GIS
-        </div>
-
-        <div class="sidebar-section">
-            <b>Current Layers</b>
-            <ul>
-                <li>Roads</li>
-                <li>Cities</li>
-                <li>Flood Zones</li>
-                <li>Townships</li>
-                <li>County Boundary</li>
-            </ul>
-        </div>
-
-        <div class="sidebar-section">
-            <b>Instructions</b>
-            <p>
-                Use the layer control in the upper-right corner
-                to toggle GIS layers on and off.
-            </p>
-        </div>
-
-        <div class="sidebar-section">
-            <b>Future Expansion</b>
-            <ul>
-                <li>Streams</li>
-                <li>Bridges</li>
-                <li>Parcel Viewer</li>
-                <li>Road Conditions</li>
-                <li>Work Orders</li>
-            </ul>
-        </div>
-
-    </div>
-
-    <div id="map"></div>
+  Layered county GIS viewer using:
+  roads, flood zones, cities, township boundaries,
+  and county limits.
 
 </div>
 
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
 <script>
 
-const map = L.map('map').setView([39.53, -94.52], 10);
+const map = L.map('map');
 
-L.tileLayer(
-    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    {
-        attribution: '&copy; OpenStreetMap contributors'
-    }
+const osm = L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }
 ).addTo(map);
 
 L.control.scale().addTo(map);
 
 L.Control.geocoder({
-    defaultMarkGeocode: true
+  defaultMarkGeocode: true
 }).addTo(map);
 
-async function loadLayers() {
+let countyLayer;
+let roadsLayer;
+let citiesLayer;
+let townshipsLayer;
+let floodLayer;
 
-    const boundaryData = await fetch('/static/clinton_boundary.geojson').then(r => r.json());
-    const roadsData = await fetch('/static/roads.geojson').then(r => r.json());
-    const citiesData = await fetch('/static/cities.geojson').then(r => r.json());
-    const floodData = await fetch('/static/floodzones.geojson').then(r => r.json());
-    const townshipData = await fetch('/static/townships.geojson').then(r => r.json());
+async function loadMap() {
 
-    const boundaryLayer = L.geoJSON(boundaryData, {
-        style: {
-            color: 'black',
-            weight: 4,
-            fillOpacity: 0
+  // COUNTY BOUNDARY
+
+  const countyResponse = await fetch('./static/clinton_boundary.geojson');
+
+  const countyData = await countyResponse.json();
+
+  countyLayer = L.geoJSON(countyData, {
+
+    style: {
+      color: '#ff0000',
+      weight: 3,
+      fillOpacity: 0.03
+    }
+
+  }).addTo(map);
+
+  map.fitBounds(countyLayer.getBounds());
+
+
+  // ROADS
+
+  try {
+
+    const roadsResponse =
+      await fetch('./static/Roads/roads.geojson');
+
+    const roadsData = await roadsResponse.json();
+
+    roadsLayer = L.geoJSON(roadsData, {
+
+      style: {
+        color: '#444444',
+        weight: 1
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        if (feature.properties) {
+
+          let popup = '';
+
+          for (const key in feature.properties) {
+
+            popup +=
+              '<b>' + key + '</b>: '
+              + feature.properties[key]
+              + '<br>';
+
+          }
+
+          layer.bindPopup(popup);
+
         }
+
+      }
+
     });
 
-    const roadsLayer = L.geoJSON(roadsData, {
-        style: {
-            color: '#cc0000',
-            weight: 2
-        },
-        onEachFeature: function(feature, layer) {
+  } catch (err) {
 
-            if (feature.properties) {
+    console.log('Road layer not loaded');
 
-                let popupContent = '';
+  }
 
-                for (const key in feature.properties) {
-                    popupContent += `<b>${key}</b>: ${feature.properties[key]}<br>`;
-                }
 
-                layer.bindPopup(popupContent);
+  // CITIES
+
+  try {
+
+    const citiesResponse =
+      await fetch('./static/Cities/cities.geojson');
+
+    const citiesData = await citiesResponse.json();
+
+    citiesLayer = L.geoJSON(citiesData, {
+
+      pointToLayer: function(feature, latlng) {
+
+        return L.circleMarker(latlng, {
+
+          radius: 6,
+
+          fillColor: '#7a00cc',
+
+          color: '#000',
+
+          weight: 1,
+
+          opacity: 1,
+
+          fillOpacity: 0.8
+
+        });
+
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        if (feature.properties && feature.properties.NAME) {
+
+          layer.bindPopup(
+            feature.properties.NAME
+          );
+
+          layer.bindTooltip(
+            feature.properties.NAME,
+            {
+              permanent: true,
+              direction: 'top',
+              className: 'city-label'
             }
+          );
+
         }
+
+      }
+
     });
 
-    const citiesLayer = L.geoJSON(citiesData, {
+  } catch (err) {
 
-        pointToLayer: function(feature, latlng) {
+    console.log('Cities layer not loaded');
 
-            return L.circleMarker(latlng, {
-                radius: 6,
-                fillColor: '#0055ff',
-                color: '#000',
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8
-            });
-        },
+  }
 
-        onEachFeature: function(feature, layer) {
 
-            if (feature.properties.NAME) {
+  // TOWNSHIPS
 
-                layer.bindPopup(feature.properties.NAME);
+  try {
 
-                layer.bindTooltip(
-                    feature.properties.NAME,
-                    {
-                        permanent: true,
-                        direction: 'top',
-                        className: 'city-label'
-                    }
-                );
+    const townshipResponse =
+      await fetch('./static/Townships/townships.geojson');
+
+    const townshipData = await townshipResponse.json();
+
+    townshipsLayer = L.geoJSON(townshipData, {
+
+      style: {
+
+        color: '#0066ff',
+
+        weight: 2,
+
+        dashArray: '4,4',
+
+        fillOpacity: 0
+
+      },
+
+      onEachFeature: function (feature, layer) {
+
+        if (feature.properties && feature.properties.NAME) {
+
+          layer.bindPopup(
+            'Township: ' + feature.properties.NAME
+          );
+
+          layer.bindTooltip(
+            feature.properties.NAME,
+            {
+              permanent: true,
+              direction: 'center',
+              className: 'township-label'
             }
+          );
+
         }
+
+      }
+
     });
 
-    const floodLayer = L.geoJSON(floodData, {
-        style: {
-            color: '#0066ff',
-            weight: 1,
-            fillColor: '#3399ff',
-            fillOpacity: 0.35
+  } catch (err) {
+
+    console.log('Township layer not loaded');
+
+  }
+
+
+  // FLOOD ZONES
+
+  try {
+
+    const floodResponse =
+      await fetch('./static/Floodzones/floodzones.geojson');
+
+    const floodData = await floodResponse.json();
+
+    floodLayer = L.geoJSON(floodData, {
+
+      style: {
+
+        color: '#00aaff',
+
+        weight: 1,
+
+        fillColor: '#00ccff',
+
+        fillOpacity: 0.25
+
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        if (feature.properties) {
+
+          let popup = '';
+
+          for (const key in feature.properties) {
+
+            popup +=
+              '<b>' + key + '</b>: '
+              + feature.properties[key]
+              + '<br>';
+
+          }
+
+          layer.bindPopup(popup);
+
         }
+
+      }
+
     });
 
-    const townshipLayer = L.geoJSON(townshipData, {
-        style: {
-            color: '#7d3cff',
-            weight: 2,
-            dashArray: '6',
-            fillOpacity: 0.02
-        },
+  } catch (err) {
 
-        onEachFeature: function(feature, layer) {
+    console.log('Flood layer not loaded');
 
-            if (feature.properties.NAME) {
-                layer.bindPopup(
-                    'Township: ' + feature.properties.NAME
-                );
-            }
-        }
-    });
+  }
 
-    boundaryLayer.addTo(map);
-    roadsLayer.addTo(map);
-    citiesLayer.addTo(map);
 
-    const overlays = {
-        "County Boundary": boundaryLayer,
-        "Roads": roadsLayer,
-        "Cities": citiesLayer,
-        "Flood Zones": floodLayer,
-        "Townships": townshipLayer
-    };
+  // DEFAULT ACTIVE LAYERS
 
-    L.control.layers(
-        null,
-        overlays,
-        {
-            collapsed: false
-        }
-    ).addTo(map);
+  if (roadsLayer) roadsLayer.addTo(map);
 
-    const legend = L.control({ position: 'bottomright' });
+  if (citiesLayer) citiesLayer.addTo(map);
 
-    legend.onAdd = function () {
+  if (townshipsLayer) townshipsLayer.addTo(map);
 
-        const div = L.DomUtil.create('div', 'legend');
 
-        div.innerHTML = `
-            <b>Legend</b><br><br>
+  // OVERLAY CONTROLS
 
-            <span style="color:black;">━━</span>
-            County Boundary<br>
+  const overlays = {};
 
-            <span style="color:red;">━━</span>
-            Roads<br>
+  if (roadsLayer)
+    overlays['Roads'] = roadsLayer;
 
-            <span style="color:#0066ff;">━━</span>
-            Flood Zones<br>
+  if (citiesLayer)
+    overlays['Cities'] = citiesLayer;
 
-            <span style="color:#7d3cff;">━━</span>
-            Townships<br>
+  if (townshipsLayer)
+    overlays['Townships'] = townshipsLayer;
 
-            <span style="color:#0055ff;">●</span>
-            Cities
-        `;
+  if (floodLayer)
+    overlays['Flood Zones'] = floodLayer;
 
-        return div;
-    };
 
-    legend.addTo(map);
+  L.control.layers(
+    {
+      'OpenStreetMap': osm
+    },
+    overlays,
+    {
+      collapsed: false
+    }
+  ).addTo(map);
+
+
+  // LEGEND
+
+  const legend = L.control({
+    position: 'bottomright'
+  });
+
+  legend.onAdd = function () {
+
+    const div = L.DomUtil.create(
+      'div',
+      'legend'
+    );
+
+    div.innerHTML = `
+
+      <b>Legend</b><br><br>
+
+      <span style="color:#ff0000;">━━</span>
+      County Boundary<br>
+
+      <span style="color:#444444;">━━</span>
+      Roads<br>
+
+      <span style="color:#0066ff;">━━</span>
+      Townships<br>
+
+      <span style="color:#00aaff;">━━</span>
+      Flood Zones<br>
+
+      <span style="color:#7a00cc;">●</span>
+      Cities
+
+    `;
+
+    return div;
+
+  };
+
+  legend.addTo(map);
 
 }
 
-loadLayers();
+loadMap();
 
 </script>
 
