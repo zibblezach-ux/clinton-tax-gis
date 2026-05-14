@@ -336,21 +336,57 @@ async function loadMap() {
       const d = parcel.data;
 
       if (
-        parcel.__xmin &&
-        parcel.__xmax &&
-        parcel.__ymin &&
-        parcel.__ymax
+        parcel.__xmin != null &&
+        parcel.__xmax != null &&
+        parcel.__ymin != null &&
+        parcel.__ymax != null
       ) {
+
+        // normalize values
+
+        const xmin =
+          Math.min(parcel.__xmin, parcel.__xmax);
+
+        const xmax =
+          Math.max(parcel.__xmin, parcel.__xmax);
+
+        const ymin =
+          Math.min(parcel.__ymin, parcel.__ymax);
+
+        const ymax =
+          Math.max(parcel.__ymin, parcel.__ymax);
+
+        // reject absurd values
+
+        if (
+          !isFinite(xmin) ||
+          !isFinite(xmax) ||
+          !isFinite(ymin) ||
+          !isFinite(ymax)
+        ) {
+          return;
+        }
 
         const sw =
           L.Projection.SphericalMercator.unproject(
-            L.point(parcel.__xmin, parcel.__ymin)
+            L.point(xmin, ymin)
           );
 
         const ne =
           L.Projection.SphericalMercator.unproject(
-            L.point(parcel.__xmax, parcel.__ymax)
+            L.point(xmax, ymax)
           );
+
+        // reject impossible bounds
+
+        if (
+          sw.lat < 35 ||
+          sw.lat > 41 ||
+          ne.lat < 35 ||
+          ne.lat > 41
+        ) {
+          return;
+        }
 
         const rect = L.rectangle(
           [sw, ne],
