@@ -131,9 +131,9 @@ async function loadMap() {
 
       onEachFeature: function (feature, layer) {
 
-        if (feature.properties && feature.properties.LABEL) {
+        if (feature.properties && feature.properties.NAME) {
 
-          layer.bindTooltip(feature.properties.LABEL, {
+          layer.bindTooltip(feature.properties.NAME, {
             permanent: true,
             direction: 'center',
             className: 'township-label'
