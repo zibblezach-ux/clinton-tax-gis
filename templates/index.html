@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -123,7 +124,7 @@
 
   Property and infrastructure GIS viewer using:
   roads, flood zones, cities, townships,
-  school districts, and county limits.
+  school districts, county limits, and parcels.
 
 </div>
 
@@ -157,10 +158,23 @@ let citiesLayer;
 let townshipsLayer;
 let floodLayer;
 let schoolLayer;
+let parcelLayer = L.layerGroup();
+
+function mercatorToLatLng(x, y) {
+
+  const lng = (x / 20037508.34) * 180;
+
+  let lat = (y / 20037508.34) * 180;
+
+  lat =
+    (180 / Math.PI) *
+    (2 * Math.atan(Math.exp(lat * Math.PI / 180)) - Math.PI / 2);
+
+  return [lat, lng];
+
+}
 
 async function loadMap() {
-
-  // COUNTY BOUNDARY
 
   const countyResponse =
     await fetch('./static/clinton_boundary.geojson');
@@ -181,8 +195,6 @@ async function loadMap() {
   map.fitBounds(countyLayer.getBounds());
 
 
-  // ROADS
-
   try {
 
     const roadsResponse =
@@ -198,27 +210,6 @@ async function loadMap() {
         weight: 0.7,
         opacity: 0.35,
         dashArray: '3,3'
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        if (feature.properties) {
-
-          let popup = '';
-
-          for (const key in feature.properties) {
-
-            popup +=
-              '<b>' + key + '</b>: '
-              + feature.properties[key]
-              + '<br>';
-
-          }
-
-          layer.bindPopup(popup);
-
-        }
-
       }
 
     });
@@ -226,12 +217,9 @@ async function loadMap() {
   } catch (err) {
 
     console.log(err);
-    console.log('Road layer not loaded');
 
   }
 
-
-  // CITIES
 
   try {
 
@@ -248,15 +236,10 @@ async function loadMap() {
         return L.circleMarker(latlng, {
 
           radius: 5,
-
           fillColor: '#7a00cc',
-
           color: '#000',
-
           weight: 1,
-
           opacity: 1,
-
           fillOpacity: 0.85
 
         });
@@ -289,12 +272,9 @@ async function loadMap() {
   } catch (err) {
 
     console.log(err);
-    console.log('Cities layer not loaded');
 
   }
 
-
-  // TOWNSHIPS
 
   try {
 
@@ -309,27 +289,10 @@ async function loadMap() {
       style: {
 
         color: '#7aa6ff',
-
         weight: 1,
-
         dashArray: '2,6',
-
         opacity: 0.45,
-
         fillOpacity: 0
-
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        if (feature.properties && feature.properties.NAME) {
-
-          layer.bindPopup(
-            'Township: ' +
-            feature.properties.NAME
-          );
-
-        }
 
       }
 
@@ -338,12 +301,9 @@ async function loadMap() {
   } catch (err) {
 
     console.log(err);
-    console.log('Township layer not loaded');
 
   }
 
-
-  // FLOOD ZONES
 
   try {
 
@@ -358,33 +318,9 @@ async function loadMap() {
       style: {
 
         color: '#00aaff',
-
         weight: 1,
-
         fillColor: '#00ccff',
-
         fillOpacity: 0.20
-
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        if (feature.properties) {
-
-          let popup = '';
-
-          for (const key in feature.properties) {
-
-            popup +=
-              '<b>' + key + '</b>: '
-              + feature.properties[key]
-              + '<br>';
-
-          }
-
-          layer.bindPopup(popup);
-
-        }
 
       }
 
@@ -393,12 +329,9 @@ async function loadMap() {
   } catch (err) {
 
     console.log(err);
-    console.log('Flood layer not loaded');
 
   }
 
-
-  // SCHOOL DISTRICTS
 
   try {
 
@@ -408,71 +341,92 @@ async function loadMap() {
     const schoolData =
       await schoolResponse.json();
 
-    console.log('School district data loaded');
-
     schoolLayer = L.geoJSON(schoolData, {
 
       style: {
 
         color: '#008800',
-
         weight: 3,
-
         opacity: 0.9,
-
         dashArray: '8,4',
-
         fillOpacity: 0.02
-
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        if (feature.properties) {
-
-          const districtName =
-            feature.properties.NAME ||
-            'School District';
-
-          layer.bindPopup(
-            'School District: ' + districtName
-          );
-
-          layer.bindTooltip(
-            districtName,
-            {
-              permanent: true,
-              direction: 'center',
-              className: 'district-label'
-            }
-          );
-
-        }
 
       }
 
     });
 
-    schoolLayer.addTo(map);
-
   } catch (err) {
 
     console.log(err);
-    console.log('School district layer not loaded');
 
   }
 
 
-  // DEFAULT ACTIVE LAYERS
+  // PARCELS
+
+  try {
+
+    const parcelResponse =
+      await fetch('./static/data/clinton_parcels.json');
+
+    const parcelData =
+      await parcelResponse.json();
+
+    parcelData.data.forEach(parcel => {
+
+      const d = parcel.data;
+
+      if (
+        parcel.__xmin &&
+        parcel.__xmax &&
+        parcel.__ymin &&
+        parcel.__ymax
+      ) {
+
+        const southwest =
+          mercatorToLatLng(
+            parcel.__xmin,
+            parcel.__ymin
+          );
+
+        const northeast =
+          mercatorToLatLng(
+            parcel.__xmax,
+            parcel.__ymax
+          );
+
+        const rect = L.rectangle(
+          [southwest, northeast],
+          {
+            color: '#ff7800',
+            weight: 0.5,
+            fillOpacity: 0.08
+          }
+        );
+
+        rect.bindPopup(`
+          <b>Parcel:</b> ${d.parcel_num || ''}<br>
+          <b>Owner:</b> ${d.deedholder || ''}<br>
+          <b>Address:</b> ${d.siteaddres || ''}
+        `);
+
+        parcelLayer.addLayer(rect);
+
+      }
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+    console.log('Parcel layer not loaded');
+
+  }
+
 
   if (roadsLayer) roadsLayer.addTo(map);
-
   if (citiesLayer) citiesLayer.addTo(map);
-
   if (townshipsLayer) townshipsLayer.addTo(map);
-
-
-  // OVERLAY CONTROLS
 
   const overlays = {};
 
@@ -491,6 +445,7 @@ async function loadMap() {
   if (schoolLayer)
     overlays['School Districts'] = schoolLayer;
 
+  overlays['Parcels'] = parcelLayer;
 
   L.control.layers(
     {
@@ -501,50 +456,6 @@ async function loadMap() {
       collapsed: false
     }
   ).addTo(map);
-
-
-  // LEGEND
-
-  const legend = L.control({
-    position: 'bottomright'
-  });
-
-  legend.onAdd = function () {
-
-    const div = L.DomUtil.create(
-      'div',
-      'legend'
-    );
-
-    div.innerHTML = `
-
-      <b>Legend</b><br><br>
-
-      <span style="color:#ff0000;">━━</span>
-      County Boundary<br>
-
-      <span style="color:#666666;">━━</span>
-      Roads<br>
-
-      <span style="color:#7aa6ff;">━━</span>
-      Townships<br>
-
-      <span style="color:#00aaff;">━━</span>
-      Flood Zones<br>
-
-      <span style="color:#008800;">━━</span>
-      School Districts<br>
-
-      <span style="color:#7a00cc;">●</span>
-      Cities
-
-    `;
-
-    return div;
-
-  };
-
-  legend.addTo(map);
 
 }
 
