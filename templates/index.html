@@ -16,6 +16,8 @@
     href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
   />
 
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
   <style>
 
     html, body {
@@ -73,13 +75,8 @@
 <body>
 
 <div class="info-panel">
-
-  <div class="info-title">
-    Clinton County GIS
-  </div>
-
-  County infrastructure GIS viewer (roads, towns, zoning layers).
-
+  <div class="info-title">Clinton County GIS</div>
+  Tax concentration heatmap (prototype)
 </div>
 
 <div id="map"></div>
@@ -114,9 +111,13 @@ let townshipsLayer;
 let floodLayer;
 let schoolLayer;
 
+// HEAT LAYER
+let heatPoints = [];
+let heatLayer;
+
 async function loadMap() {
 
-  // COUNTY BOUNDARY
+  // COUNTY
   try {
     const res = await fetch('./static/clinton_boundary.geojson');
     const data = await res.json();
@@ -132,7 +133,7 @@ async function loadMap() {
     map.fitBounds(countyLayer.getBounds());
 
   } catch (err) {
-    console.log('County failed', err);
+    console.log(err);
   }
 
 
@@ -151,7 +152,7 @@ async function loadMap() {
     }).addTo(map);
 
   } catch (err) {
-    console.log('Roads failed', err);
+    console.log(err);
   }
 
 
@@ -162,22 +163,19 @@ async function loadMap() {
 
     citiesLayer = L.geoJSON(data, {
 
-      pointToLayer: function(feature, latlng) {
-        return L.circleMarker(latlng, {
+      pointToLayer: (f, latlng) =>
+        L.circleMarker(latlng, {
           radius: 5,
           fillColor: '#7a00cc',
           color: '#000',
           weight: 1,
-          opacity: 1,
           fillOpacity: 0.85
-        });
-      },
+        }),
 
-      onEachFeature: function(feature, layer) {
-        if (feature.properties?.NAME) {
-          layer.bindTooltip(feature.properties.NAME, {
+      onEachFeature: (f, layer) => {
+        if (f.properties?.NAME) {
+          layer.bindTooltip(f.properties.NAME, {
             permanent: true,
-            direction: 'top',
             className: 'city-label'
           });
         }
@@ -186,7 +184,7 @@ async function loadMap() {
     }).addTo(map);
 
   } catch (err) {
-    console.log('Cities failed', err);
+    console.log(err);
   }
 
 
@@ -206,11 +204,11 @@ async function loadMap() {
     }).addTo(map);
 
   } catch (err) {
-    console.log('Townships failed', err);
+    console.log(err);
   }
 
 
-  // FLOOD ZONES
+  // FLOOD
   try {
     const res = await fetch('./static/Floodzones/floodzones.geojson');
     const data = await res.json();
@@ -225,11 +223,11 @@ async function loadMap() {
     });
 
   } catch (err) {
-    console.log('Flood zones failed', err);
+    console.log(err);
   }
 
 
-  // SCHOOL DISTRICTS
+  // SCHOOL
   try {
     const res = await fetch('./static/school_districts/school_districts.geojson');
     const data = await res.json();
@@ -245,17 +243,64 @@ async function loadMap() {
     });
 
   } catch (err) {
-    console.log('School districts failed', err);
+    console.log(err);
   }
 
 
-  // LAYER CONTROL (NO PARCELS)
+  // PARCEL HEATMAP (CENTROIDS)
+  try {
+
+    const res = await fetch('./static/data/clinton_parcels.json');
+    const json = await res.json();
+
+    const parcels = json.data || [];
+
+    parcels.forEach(p => {
+
+      const xmin = p.__xmin;
+      const xmax = p.__xmax;
+      const ymin = p.__ymin;
+      const ymax = p.__ymax;
+
+      if (
+        xmin == null || xmax == null ||
+        ymin == null || ymax == null
+      ) return;
+
+      const cx = (xmin + xmax) / 2;
+      const cy = (ymin + ymax) / 2;
+
+      const weight = parseFloat(p.data?.deeded_acr || 1);
+
+      heatPoints.push([cy, cx, weight]);
+
+    });
+
+    heatLayer = L.heatLayer(heatPoints, {
+      radius: 20,
+      blur: 25,
+      maxZoom: 17
+    });
+
+  } catch (err) {
+    console.log('Heatmap failed', err);
+  }
+
+
+  // ADD DEFAULT LAYERS
+  if (roadsLayer) roadsLayer.addTo(map);
+  if (citiesLayer) citiesLayer.addTo(map);
+  if (townshipsLayer) townshipsLayer.addTo(map);
+
+
+  // CONTROLS
   const overlays = {
     "Roads": roadsLayer,
     "Cities": citiesLayer,
     "Townships": townshipsLayer,
     "Flood Zones": floodLayer,
-    "School Districts": schoolLayer
+    "School Districts": schoolLayer,
+    "Tax Heatmap": heatLayer
   };
 
   L.control.layers(
