@@ -72,25 +72,6 @@
       margin-bottom: 6px;
     }
 
-    @media (max-width: 768px) {
-
-      .info-panel {
-
-        top: auto;
-        bottom: 10px;
-        left: 10px;
-
-        max-width: 220px;
-
-        font-size: 12px;
-      }
-
-      .leaflet-control-layers {
-        font-size: 12px;
-      }
-
-    }
-
   </style>
 </head>
 
@@ -114,7 +95,9 @@
 
 <script>
 
-const map = L.map('map');
+const map = L.map('map', {
+  preferCanvas: true
+});
 
 const osm = L.tileLayer(
   'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -228,10 +211,6 @@ async function loadMap() {
 
         if (feature.properties && feature.properties.NAME) {
 
-          layer.bindPopup(
-            feature.properties.NAME
-          );
-
           layer.bindTooltip(
             feature.properties.NAME,
             {
@@ -267,13 +246,11 @@ async function loadMap() {
     townshipsLayer = L.geoJSON(townshipData, {
 
       style: {
-
         color: '#7aa6ff',
         weight: 1,
         dashArray: '2,6',
         opacity: 0.45,
         fillOpacity: 0
-
       }
 
     });
@@ -298,12 +275,10 @@ async function loadMap() {
     floodLayer = L.geoJSON(floodData, {
 
       style: {
-
         color: '#00aaff',
         weight: 1,
         fillColor: '#00ccff',
         fillOpacity: 0.20
-
       }
 
     });
@@ -328,13 +303,11 @@ async function loadMap() {
     schoolLayer = L.geoJSON(schoolData, {
 
       style: {
-
         color: '#008800',
         weight: 3,
         opacity: 0.9,
         dashArray: '8,4',
         fillOpacity: 0.02
-
       }
 
     });
@@ -382,6 +355,7 @@ async function loadMap() {
         const rect = L.rectangle(
           [sw, ne],
           {
+            renderer: L.canvas(),
             color: '#ff7800',
             weight: 0.4,
             fillOpacity: 0.05
@@ -415,7 +389,7 @@ async function loadMap() {
   if (townshipsLayer) townshipsLayer.addTo(map);
 
 
-  // LAYER CONTROL
+  // CONTROLS
 
   const overlays = {};
 
