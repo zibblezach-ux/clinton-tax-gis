@@ -147,7 +147,7 @@ async function loadMap() {
 
   } catch (err) {
 
-    console.log(err);
+    console.log('County load failed', err);
 
   }
 
@@ -171,11 +171,11 @@ async function loadMap() {
         dashArray: '3,3'
       }
 
-    });
+    }).addTo(map);
 
   } catch (err) {
 
-    console.log(err);
+    console.log('Roads failed', err);
 
   }
 
@@ -224,11 +224,11 @@ async function loadMap() {
 
       }
 
-    });
+    }).addTo(map);
 
   } catch (err) {
 
-    console.log(err);
+    console.log('Cities failed', err);
 
   }
 
@@ -253,11 +253,11 @@ async function loadMap() {
         fillOpacity: 0
       }
 
-    });
+    }).addTo(map);
 
   } catch (err) {
 
-    console.log(err);
+    console.log('Townships failed', err);
 
   }
 
@@ -285,7 +285,7 @@ async function loadMap() {
 
   } catch (err) {
 
-    console.log(err);
+    console.log('Flood zones failed', err);
 
   }
 
@@ -314,7 +314,7 @@ async function loadMap() {
 
   } catch (err) {
 
-    console.log(err);
+    console.log('School districts failed', err);
 
   }
 
@@ -355,7 +355,6 @@ async function loadMap() {
         const rect = L.rectangle(
           [sw, ne],
           {
-            renderer: L.canvas(),
             color: '#ff7800',
             weight: 0.4,
             fillOpacity: 0.05
@@ -376,43 +375,27 @@ async function loadMap() {
 
   } catch (err) {
 
-    console.log(err);
-    console.log('Parcel layer failed');
+    console.log('Parcel layer failed', err);
 
   }
 
 
-  // DEFAULT LAYERS
+  // LAYER CONTROLS
 
-  if (roadsLayer) roadsLayer.addTo(map);
-  if (citiesLayer) citiesLayer.addTo(map);
-  if (townshipsLayer) townshipsLayer.addTo(map);
+  const overlays = {
 
+    "Roads": roadsLayer,
+    "Cities": citiesLayer,
+    "Townships": townshipsLayer,
+    "Flood Zones": floodLayer,
+    "School Districts": schoolLayer,
+    "Parcels": parcelLayer
 
-  // CONTROLS
-
-  const overlays = {};
-
-  if (roadsLayer)
-    overlays['Roads'] = roadsLayer;
-
-  if (citiesLayer)
-    overlays['Cities'] = citiesLayer;
-
-  if (townshipsLayer)
-    overlays['Townships'] = townshipsLayer;
-
-  if (floodLayer)
-    overlays['Flood Zones'] = floodLayer;
-
-  if (schoolLayer)
-    overlays['School Districts'] = schoolLayer;
-
-  overlays['Parcels'] = parcelLayer;
+  };
 
   L.control.layers(
     {
-      'OpenStreetMap': osm
+      "OpenStreetMap": osm
     },
     overlays,
     {
