@@ -8,7 +8,6 @@
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.heat/dist/leaflet-heat.css" />
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
@@ -65,8 +64,11 @@
 
 <script>
 
-const map = L.map('map', { preferCanvas: true });
+const map = L.map('map', {
+  preferCanvas: true
+});
 
+// ALWAYS ADD BASE TILE FIRST
 const osm = L.tileLayer(
   'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   {
@@ -81,54 +83,81 @@ L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 let heatLayer;
 let heatPoints = [];
 
-async function build() {
+let overlays = {};
 
-  const res = await fetch('./static/data/clinton_parcels.json');
-  const json = await res.json();
-  const data = json.data || [];
+async function load() {
 
-  for (const p of data) {
+  // ---------------------------
+  // PARCEL HEATMAP (SAFE MODE)
+  // ---------------------------
 
-    const xmin = p.__xmin, xmax = p.__xmax;
-    const ymin = p.__ymin, ymax = p.__ymax;
+  try {
 
-    if (
-      xmin == null || xmax == null ||
-      ymin == null || ymax == null
-    ) continue;
+    const res = await fetch('./static/data/clinton_parcels.json');
+    const json = await res.json();
 
-    const cx = (xmin + xmax) / 2;
-    const cy = (ymin + ymax) / 2;
+    const parcels =
+      Array.isArray(json) ? json :
+      Array.isArray(json.data) ? json.data :
+      [];
 
-    // FINAL WEIGHT MODEL (robust, no dependency on exact schema)
-    let weight = 1;
+    for (const p of parcels) {
 
-    const v =
-      parseFloat(p?.data?.tax_value) ||
-      parseFloat(p?.data?.assessed) ||
-      parseFloat(p?.data?.market_value) ||
-      parseFloat(p?.data?.land_val) ||
-      parseFloat(p?.data?.improv_val);
+      const xmin = Number(p.__xmin);
+      const xmax = Number(p.__xmax);
+      const ymin = Number(p.__ymin);
+      const ymax = Number(p.__ymax);
 
-    if (!isNaN(v) && v > 0) {
-      weight = v;
-    } else {
-      const ac = parseFloat(p?.data?.deeded_acr);
-      weight = (!isNaN(ac) ? ac : 1) * 1000;
+      if (
+        !isFinite(xmin) ||
+        !isFinite(xmax) ||
+        !isFinite(ymin) ||
+        !isFinite(ymax)
+      ) continue;
+
+      const cx = (xmin + xmax) / 2;
+      const cy = (ymin + ymax) / 2;
+
+      // robust weight (fallback-safe)
+      let weight = 1;
+
+      const d = p.data || {};
+
+      const tax =
+        Number(d.tax_value) ||
+        Number(d.assessed) ||
+        Number(d.market_value) ||
+        Number(d.land_val) ||
+        Number(d.improv_val);
+
+      if (isFinite(tax) && tax > 0) {
+        weight = tax;
+      } else {
+        const ac = Number(d.deeded_acr);
+        weight = (isFinite(ac) ? ac : 1) * 1000;
+      }
+
+      heatPoints.push([cy, cx, weight]);
     }
 
-    heatPoints.push([cy, cx, weight]);
+    if (heatPoints.length > 0 && L.heatLayer) {
+
+      heatLayer = L.heatLayer(heatPoints, {
+        radius: 25,
+        blur: 30,
+        maxZoom: 17
+      }).addTo(map);
+
+      overlays["Tax Heatmap"] = heatLayer;
+    }
+
+  } catch (e) {
+    console.log("Heat layer failed", e);
   }
 
-  heatLayer = L.heatLayer(heatPoints, {
-    radius: 25,
-    blur: 30,
-    maxZoom: 17
-  }).addTo(map);
-
-  const overlays = {
-    "Tax Heatmap": heatLayer
-  };
+  // ---------------------------
+  // LAYER CONTROL (ALWAYS LAST)
+  // ---------------------------
 
   L.control.layers(
     { "OpenStreetMap": osm },
@@ -138,7 +167,7 @@ async function build() {
 
 }
 
-build();
+load();
 
 </script>
 
