@@ -51,6 +51,15 @@
       font-weight: bold;
     }
 
+    .school-label {
+      background: rgba(255,255,255,0.75);
+      border: none;
+      box-shadow: none;
+      color: #006600;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
     .info-panel {
       position: absolute;
       top: 10px;
@@ -253,13 +262,35 @@ async function loadMap() {
     const data = await res.json();
 
     schoolLayer = L.geoJSON(data, {
+
       style: {
         color: '#008800',
         weight: 3,
         opacity: 0.9,
         dashArray: '8,4',
-        fillOpacity: 0.02
+        fillOpacity: 0.03
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const name =
+          feature.properties?.NAME ||
+          feature.properties?.DISTRICT ||
+          feature.properties?.LABEL ||
+          feature.properties?.NAMELSAD ||
+          "School District";
+
+        const center = layer.getBounds().getCenter();
+
+        L.marker(center, {
+          icon: L.divIcon({
+            className: 'school-label',
+            html: name
+          })
+        }).addTo(map);
+
       }
+
     });
 
   } catch (err) {
