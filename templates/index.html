@@ -54,21 +54,18 @@
     }
 
     .school-label {
-      background: rgba(255,255,255,0.82);
-      border: 1px solid rgba(0,100,0,0.25);
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(0,100,0,0.35);
       border-radius: 4px;
-      box-shadow: 0 0 4px rgba(0,0,0,0.15);
+      box-shadow: 0 0 4px rgba(0,0,0,0.2);
 
       color: #006600;
-
       font-size: 14px;
       font-weight: bold;
 
       padding: 4px 10px;
 
       white-space: nowrap;
-      width: max-content;
-      min-width: 160px;
       text-align: center;
     }
 
@@ -280,26 +277,25 @@ async function loadMap() {
         weight: 3,
         opacity: 0.9,
         dashArray: '8,4',
-        fillOpacity: 0.03
+        fillColor: '#b7e3b7',
+        fillOpacity: 0.04
       },
 
       onEachFeature: function(feature, layer) {
 
-        const name =
-          feature.properties?.NAME ||
-          feature.properties?.DISTRICT ||
-          feature.properties?.LABEL ||
-          feature.properties?.NAMELSAD ||
-          "School District";
+        const name = feature.properties?.NAME || "";
 
-        const center = layer.getBounds().getCenter();
+        if (name) {
 
-        L.marker(center, {
-          icon: L.divIcon({
+          layer.bindTooltip(name, {
+            permanent: true,
+            sticky: false,
+            direction: 'center',
             className: 'school-label',
-            html: name
-          })
-        }).addTo(map);
+            opacity: 1
+          });
+
+        }
 
       }
 
