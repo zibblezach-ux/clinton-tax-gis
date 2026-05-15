@@ -42,6 +42,15 @@
       font-weight: bold;
     }
 
+    .township-label {
+      background: rgba(255,255,255,0.7);
+      border: none;
+      box-shadow: none;
+      color: #0033aa;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
     .info-panel {
       position: absolute;
       top: 10px;
@@ -102,6 +111,7 @@ async function loadMap() {
 
   // COUNTY
   try {
+
     const res = await fetch('./static/clinton_boundary.geojson');
     const data = await res.json();
 
@@ -116,12 +126,13 @@ async function loadMap() {
     map.fitBounds(countyLayer.getBounds());
 
   } catch (err) {
-    console.log(err);
+    console.log("County layer failed:", err);
   }
 
 
   // ROADS
   try {
+
     const res = await fetch('./static/Roads/roads.geojson');
     const data = await res.json();
 
@@ -135,12 +146,13 @@ async function loadMap() {
     }).addTo(map);
 
   } catch (err) {
-    console.log(err);
+    console.log("Road layer failed:", err);
   }
 
 
   // CITIES
   try {
+
     const res = await fetch('./static/Cities/cities.geojson');
     const data = await res.json();
 
@@ -156,43 +168,67 @@ async function loadMap() {
         }),
 
       onEachFeature: (f, layer) => {
+
         if (f.properties?.NAME) {
+
           layer.bindTooltip(f.properties.NAME, {
             permanent: true,
             className: 'city-label'
           });
+
         }
+
       }
 
     }).addTo(map);
 
   } catch (err) {
-    console.log(err);
+    console.log("City layer failed:", err);
   }
 
 
   // TOWNSHIPS
   try {
+
     const res = await fetch('./static/Townships/townships.geojson');
     const data = await res.json();
 
     townshipsLayer = L.geoJSON(data, {
+
       style: {
-        color: '#7aa6ff',
-        weight: 1,
-        dashArray: '2,6',
-        opacity: 0.45,
-        fillOpacity: 0
+        color: '#0044ff',
+        weight: 3,
+        opacity: 1,
+        dashArray: null,
+        fillColor: '#66a3ff',
+        fillOpacity: 0.08
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const name =
+          feature.properties?.NAME ||
+          feature.properties?.NAMELSAD ||
+          "Township";
+
+        layer.bindTooltip(name, {
+          permanent: true,
+          direction: 'center',
+          className: 'township-label'
+        });
+
       }
+
     }).addTo(map);
 
   } catch (err) {
-    console.log(err);
+    console.log("Township layer failed:", err);
   }
 
 
   // FLOOD ZONES
   try {
+
     const res = await fetch('./static/Floodzones/floodzones.geojson');
     const data = await res.json();
 
@@ -206,12 +242,13 @@ async function loadMap() {
     });
 
   } catch (err) {
-    console.log(err);
+    console.log("Flood layer failed:", err);
   }
 
 
   // SCHOOL DISTRICTS
   try {
+
     const res = await fetch('./static/school_districts/school_districts.geojson');
     const data = await res.json();
 
@@ -226,7 +263,7 @@ async function loadMap() {
     });
 
   } catch (err) {
-    console.log(err);
+    console.log("School layer failed:", err);
   }
 
 
