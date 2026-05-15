@@ -139,9 +139,9 @@ async function loadMap() {
         weight: 3,
         fillOpacity: 0.02
       }
-    }).addTo(map);
+    });
 
-    map.fitBounds(countyLayer.getBounds());
+    map.fitBounds(L.geoJSON(data).getBounds());
 
   } catch (err) {
     console.log("County layer failed:", err);
@@ -198,7 +198,7 @@ async function loadMap() {
 
       }
 
-    }).addTo(map);
+    });
 
   } catch (err) {
     console.log("City layer failed:", err);
@@ -237,7 +237,7 @@ async function loadMap() {
 
       }
 
-    }).addTo(map);
+    });
 
   } catch (err) {
     console.log("Township layer failed:", err);
@@ -295,11 +295,8 @@ async function loadMap() {
             opacity: 1
           };
 
-          // MANUAL POSITION ADJUSTMENT FOR OSBORN
           if (name.includes("Osborn")) {
-
             tooltipOptions.offset = [55, 14];
-
           }
 
           layer.bindTooltip(name, tooltipOptions);
