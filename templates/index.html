@@ -360,15 +360,33 @@ async function loadMap() {
           <b>Acres:</b> ${acres}
         `);
 
-        if (parcelNum) {
+        function updateParcelLabel() {
 
-          layer.bindTooltip(parcelNum, {
-            permanent: true,
-            direction: 'center',
-            className: 'parcel-label'
-          });
+          if (map.getZoom() >= 16) {
+
+            if (!layer.getTooltip()) {
+
+              layer.bindTooltip(parcelNum, {
+                permanent: true,
+                direction: 'center',
+                className: 'parcel-label'
+              });
+
+            }
+
+          } else {
+
+            if (layer.getTooltip()) {
+              layer.unbindTooltip();
+            }
+
+          }
 
         }
+
+        map.on('zoomend', updateParcelLabel);
+
+        updateParcelLabel();
 
       }
 
