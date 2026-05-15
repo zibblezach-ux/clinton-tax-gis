@@ -124,6 +124,7 @@ let citiesLayer;
 let townshipsLayer;
 let floodLayer;
 let schoolLayer;
+let parcelsLayer;
 
 async function loadMap() {
 
@@ -312,13 +313,61 @@ async function loadMap() {
   }
 
 
+  // PARCELS
+  try {
+
+    const res = await fetch('./static/Parcels/parcels.geojson');
+    const data = await res.json();
+
+    parcelsLayer = L.geoJSON(data, {
+
+      style: {
+        color: '#cc6600',
+        weight: 0.8,
+        opacity: 0.75,
+        fillColor: '#ffcc66',
+        fillOpacity: 0.08
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const parcelNumber =
+          feature.properties?.parcel_number ||
+          feature.properties?.parcel_num ||
+          'Unknown';
+
+        const owner =
+          feature.properties?.owner ||
+          feature.properties?.deedholder ||
+          'Unknown';
+
+        const acres =
+          feature.properties?.deeded_acr ||
+          'Unknown';
+
+        layer.bindPopup(`
+          <strong>Parcel:</strong> ${parcelNumber}<br>
+          <strong>Owner:</strong> ${owner}<br>
+          <strong>Acres:</strong> ${acres}
+        `);
+
+      }
+
+    });
+
+  } catch (err) {
+    console.log("Parcel layer failed:", err);
+  }
+
+
   // LAYER CONTROL
   const overlays = {
     "Roads": roadsLayer,
     "Cities": citiesLayer,
     "Townships": townshipsLayer,
     "Flood Zones": floodLayer,
-    "School Districts": schoolLayer
+    "School Districts": schoolLayer,
+    "Parcels": parcelsLayer
   };
 
   L.control.layers(
