@@ -1,3 +1,6 @@
+# Updated index.html
+
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -58,26 +61,23 @@
       border: 1px solid rgba(0,100,0,0.35);
       border-radius: 4px;
       box-shadow: 0 0 4px rgba(0,0,0,0.2);
-
       color: #006600;
       font-size: 14px;
       font-weight: bold;
-
       padding: 4px 10px;
-
       white-space: nowrap;
       text-align: center;
     }
 
     .parcel-label {
-      background: rgba(255,255,255,0.80);
-      border: none;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 3px;
       box-shadow: none;
-
       color: #111;
       font-size: 10px;
       font-weight: bold;
-
+      padding: 1px 3px;
       white-space: nowrap;
     }
 
@@ -86,7 +86,6 @@
       top: 10px;
       left: 60px;
       z-index: 1000;
-
       background: rgba(255,255,255,0.95);
       padding: 10px 14px;
       border-radius: 6px;
@@ -121,7 +120,8 @@ const countyBounds = [
 
 const map = L.map('map', {
   maxBounds: countyBounds,
-  maxBoundsViscosity: 0.7
+  maxBoundsViscosity: 0.7,
+  preferCanvas: true
 });
 
 map.setView([39.55, -94.45], 11);
@@ -147,6 +147,8 @@ let townshipsLayer;
 let floodLayer;
 let schoolLayer;
 let parcelsLayer;
+
+let parcelLabelsVisible = false;
 
 async function loadMap() {
 
@@ -176,6 +178,7 @@ async function loadMap() {
     const data = await res.json();
 
     roadsLayer = L.geoJSON(data, {
+      renderer: L.canvas(),
       style: {
         color: '#666666',
         weight: 0.7,
@@ -234,6 +237,8 @@ async function loadMap() {
 
     townshipsLayer = L.geoJSON(data, {
 
+      renderer: L.canvas(),
+
       style: {
         color: '#0044ff',
         weight: 3,
@@ -271,6 +276,7 @@ async function loadMap() {
     const data = await res.json();
 
     floodLayer = L.geoJSON(data, {
+      renderer: L.canvas(),
       style: {
         color: '#00aaff',
         weight: 1,
@@ -291,6 +297,8 @@ async function loadMap() {
     const data = await res.json();
 
     schoolLayer = L.geoJSON(data, {
+
+      renderer: L.canvas(),
 
       style: {
         color: '#008800',
@@ -344,10 +352,10 @@ async function loadMap() {
 
       style: {
         color: '#444444',
-        weight: 0.4,
-        opacity: 0.55,
+        weight: 0.35,
+        opacity: 0.45,
         fillColor: '#cccccc',
-        fillOpacity: 0.03
+        fillOpacity: 0.02
       },
 
       onEachFeature: function(feature, layer) {
@@ -368,13 +376,32 @@ async function loadMap() {
 
     map.on('zoomend', function() {
 
-      if (map.getZoom() >= 17) {
+      if (!map.hasLayer(parcelsLayer)) {
+        return;
+      }
+
+      const zoom = map.getZoom();
+
+      // SHOW LABELS ONLY AT EXTREME CLOSE ZOOM
+      if (zoom >= 18 && !parcelLabelsVisible) {
+
+        parcelLabelsVisible = true;
+
+        let visibleCount = 0;
 
         parcelsLayer.eachLayer(function(layer) {
 
+          if (visibleCount > 250) {
+            return;
+          }
+
+          if (!map.getBounds().intersects(layer.getBounds())) {
+            return;
+          }
+
           const parcelNum = layer.feature.properties?.parcel_num || "";
 
-          if (parcelNum && !layer.getTooltip()) {
+          if (parcelNum) {
 
             layer.bindTooltip(parcelNum, {
               permanent: true,
@@ -382,11 +409,16 @@ async function loadMap() {
               className: 'parcel-label'
             });
 
+            visibleCount++;
           }
 
         });
 
-      } else {
+      }
+
+      if (zoom < 18 && parcelLabelsVisible) {
+
+        parcelLabelsVisible = false;
 
         parcelsLayer.eachLayer(function(layer) {
 
@@ -429,3 +461,4 @@ loadMap();
 
 </body>
 </html>
+```
