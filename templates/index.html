@@ -54,7 +54,7 @@
     }
 
     .school-label {
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.92);
       border: 1px solid rgba(0,100,0,0.35);
       border-radius: 4px;
       box-shadow: 0 0 4px rgba(0,0,0,0.2);
@@ -436,11 +436,17 @@ async function loadMap() {
 
         layer.bindPopup(name);
 
-        layer.bindTooltip(name, {
-          permanent: true,
-          direction: 'center',
-          className: 'school-label'
+        const center = layer.getBounds().getCenter();
+
+        const label = L.marker(center, {
+          interactive: false,
+          icon: L.divIcon({
+            className: 'school-label',
+            html: name
+          })
         });
+
+        waterLayer.addLayer(label);
 
       }
     },
