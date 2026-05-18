@@ -78,6 +78,9 @@
       padding: 4px 10px;
       white-space: nowrap;
       text-align: center;
+      width: auto !important;
+      height: auto !important;
+      line-height: 1.2;
     }
 
     .parcel-label {
@@ -340,30 +343,6 @@ function salesTaxPopupHtml(matches) {
 }
 
 
-map.on("click", function(e) {
-
-  if (!map.hasLayer(salesTaxLayer) || !salesTaxFeatures.length) {
-    return;
-  }
-
-  const point = turf.point([e.latlng.lng, e.latlng.lat]);
-
-  const matches = salesTaxFeatures.filter(feature => {
-    try {
-      return turf.booleanPointInPolygon(point, feature);
-    } catch (err) {
-      return false;
-    }
-  });
-
-  L.popup()
-    .setLatLng(e.latlng)
-    .setContent(salesTaxPopupHtml(matches))
-    .openOn(map);
-
-});
-
-
 async function loadMap() {
 
   // ROADS
@@ -559,18 +538,33 @@ async function loadMap() {
 
       onEachFeature: function(feature, layer) {
 
-        const name =
-          feature.properties?.JURISDICTION_NAME ||
-          "Sales Tax Area";
+        layer.on('click', function(e) {
 
-        const rate =
-          feature.properties?.SALES_TAX || 0;
+          const point = turf.point([
+            e.latlng.lng,
+            e.latlng.lat
+          ]);
 
-        layer.bindPopup(`
-          <b>${name}</b><br>
-          Sales Tax: ${rate}%<br><br>
-          Click any point on the sales tax layer to list all overlapping tax jurisdictions there.
-        `);
+          const matches = salesTaxFeatures.filter(f => {
+
+            try {
+
+              return turf.booleanPointInPolygon(point, f);
+
+            } catch(err) {
+
+              return false;
+
+            }
+
+          });
+
+          L.popup()
+            .setLatLng(e.latlng)
+            .setContent(salesTaxPopupHtml(matches))
+            .openOn(map);
+
+        });
 
       }
     },
@@ -613,7 +607,8 @@ async function loadMap() {
             interactive: false,
             icon: L.divIcon({
               className: 'water-label',
-              html: escapeHtml(name)
+              html: escapeHtml(name),
+              iconSize: null
             })
           });
 
