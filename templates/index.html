@@ -150,8 +150,6 @@ let salesTaxLayer;
 let ng911Layer;
 let waterLayer;
 
-let parcelLabelsVisible = false;
-
 async function loadMap() {
 
   // COUNTY
@@ -180,6 +178,7 @@ async function loadMap() {
     const data = await res.json();
 
     roadsLayer = L.geoJSON(data, {
+
       renderer: L.canvas(),
 
       style: {
@@ -188,6 +187,7 @@ async function loadMap() {
         opacity: 0.35,
         dashArray: '3,3'
       }
+
     }).addTo(map);
 
   } catch (err) {
