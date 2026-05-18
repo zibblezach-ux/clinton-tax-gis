@@ -139,46 +139,96 @@ L.Control.geocoder({
   defaultMarkGeocode: true
 }).addTo(map);
 
-let countyLayer;
-let roadsLayer;
-let citiesLayer;
-let townshipsLayer;
-let floodLayer;
-let schoolLayer;
-let parcelsLayer;
-let salesTaxLayer;
-let ng911Layer;
-let waterLayer;
+
+// EMPTY LAYER GROUPS FIRST
+// This guarantees the checkbox control appears even if a GeoJSON file fails to load.
+
+const countyLayer = L.layerGroup();
+const roadsLayer = L.layerGroup().addTo(map);
+const citiesLayer = L.layerGroup();
+const townshipsLayer = L.layerGroup();
+const floodLayer = L.layerGroup();
+const schoolLayer = L.layerGroup();
+const parcelsLayer = L.layerGroup();
+const salesTaxLayer = L.layerGroup();
+const ng911Layer = L.layerGroup();
+const waterLayer = L.layerGroup();
+
+let parcelGeoJsonLayer = null;
+let parcelLabelsVisible = false;
+
+
+// LAYER CONTROL
+// Only Roads is checked at startup because only roadsLayer is added to the map above.
+
+const overlays = {
+  "Roads": roadsLayer,
+  "Cities": citiesLayer,
+  "Townships": townshipsLayer,
+  "Flood Zones": floodLayer,
+  "School Districts": schoolLayer,
+  "Parcels": parcelsLayer,
+  "Sales Tax": salesTaxLayer,
+  "NG911": ng911Layer,
+  "Water Districts": waterLayer
+};
+
+L.control.layers(
+  { "OpenStreetMap": osm },
+  overlays,
+  { collapsed: false }
+).addTo(map);
+
+
+async function loadGeoJson(path, targetLayer, options, label) {
+
+  try {
+
+    const res = await fetch(path);
+
+    if (!res.ok) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+
+    const data = await res.json();
+
+    const geoJsonLayer = L.geoJSON(data, options);
+    geoJsonLayer.addTo(targetLayer);
+
+    return geoJsonLayer;
+
+  } catch (err) {
+
+    console.log(`${label} layer failed:`, err);
+    return null;
+
+  }
+
+}
+
 
 async function loadMap() {
 
   // COUNTY
-  try {
-
-    const res = await fetch('./static/clinton_boundary.geojson');
-    const data = await res.json();
-
-    countyLayer = L.geoJSON(data, {
+  await loadGeoJson(
+    './static/clinton_boundary.geojson',
+    countyLayer,
+    {
       style: {
         color: '#ff0000',
         weight: 3,
         fillOpacity: 0.02
       }
-    });
-
-  } catch (err) {
-    console.log("County layer failed:", err);
-  }
+    },
+    'County'
+  );
 
 
   // ROADS
-  try {
-
-    const res = await fetch('./static/Roads/roads.geojson');
-    const data = await res.json();
-
-    roadsLayer = L.geoJSON(data, {
-
+  await loadGeoJson(
+    './static/Roads/roads.geojson',
+    roadsLayer,
+    {
       renderer: L.canvas(),
 
       style: {
@@ -187,22 +237,16 @@ async function loadMap() {
         opacity: 0.35,
         dashArray: '3,3'
       }
-
-    }).addTo(map);
-
-  } catch (err) {
-    console.log("Road layer failed:", err);
-  }
+    },
+    'Road'
+  );
 
 
   // CITIES
-  try {
-
-    const res = await fetch('./static/Cities/cities.geojson');
-    const data = await res.json();
-
-    citiesLayer = L.geoJSON(data, {
-
+  await loadGeoJson(
+    './static/Cities/cities.geojson',
+    citiesLayer,
+    {
       pointToLayer: (f, latlng) =>
         L.circleMarker(latlng, {
           radius: 5,
@@ -224,22 +268,16 @@ async function loadMap() {
         }
 
       }
-
-    });
-
-  } catch (err) {
-    console.log("City layer failed:", err);
-  }
+    },
+    'City'
+  );
 
 
   // TOWNSHIPS
-  try {
-
-    const res = await fetch('./static/Townships/townships.geojson');
-    const data = await res.json();
-
-    townshipsLayer = L.geoJSON(data, {
-
+  await loadGeoJson(
+    './static/Townships/townships.geojson',
+    townshipsLayer,
+    {
       renderer: L.canvas(),
 
       style: {
@@ -264,22 +302,16 @@ async function loadMap() {
         });
 
       }
-
-    });
-
-  } catch (err) {
-    console.log("Township layer failed:", err);
-  }
+    },
+    'Township'
+  );
 
 
   // FLOOD ZONES
-  try {
-
-    const res = await fetch('./static/Floodzones/floodzones.geojson');
-    const data = await res.json();
-
-    floodLayer = L.geoJSON(data, {
-
+  await loadGeoJson(
+    './static/Floodzones/floodzones.geojson',
+    floodLayer,
+    {
       renderer: L.canvas(),
 
       style: function(feature) {
@@ -308,22 +340,16 @@ async function loadMap() {
         };
 
       }
-
-    });
-
-  } catch (err) {
-    console.log("Flood layer failed:", err);
-  }
+    },
+    'Flood'
+  );
 
 
   // SCHOOL DISTRICTS
-  try {
-
-    const res = await fetch('./static/school_districts/school_districts.geojson');
-    const data = await res.json();
-
-    schoolLayer = L.geoJSON(data, {
-
+  await loadGeoJson(
+    './static/school_districts/school_districts.geojson',
+    schoolLayer,
+    {
       renderer: L.canvas(),
 
       style: {
@@ -358,22 +384,16 @@ async function loadMap() {
         }
 
       }
-
-    });
-
-  } catch (err) {
-    console.log("School layer failed:", err);
-  }
+    },
+    'School'
+  );
 
 
   // PARCELS
-  try {
-
-    const res = await fetch('./static/Parcels/parcels.geojson');
-    const data = await res.json();
-
-    parcelsLayer = L.geoJSON(data, {
-
+  parcelGeoJsonLayer = await loadGeoJson(
+    './static/Parcels/parcels.geojson',
+    parcelsLayer,
+    {
       renderer: L.canvas(),
 
       style: {
@@ -397,22 +417,16 @@ async function loadMap() {
         `);
 
       }
-
-    });
-
-  } catch (err) {
-    console.log("Parcel layer failed:", err);
-  }
+    },
+    'Parcel'
+  );
 
 
   // SALES TAX
-  try {
-
-    const res = await fetch('./static/SalesTax/sales_tax.geojson');
-    const data = await res.json();
-
-    salesTaxLayer = L.geoJSON(data, {
-
+  await loadGeoJson(
+    './static/SalesTax/sales_tax.geojson',
+    salesTaxLayer,
+    {
       renderer: L.canvas(),
 
       style: {
@@ -427,10 +441,12 @@ async function loadMap() {
 
         const name =
           feature.properties?.JURISDICTION_NAME ||
+          feature.properties?.NAME ||
           "Unknown";
 
         const rate =
           feature.properties?.SALES_TAX ||
+          feature.properties?.RATE ||
           "Unknown";
 
         layer.bindPopup(`
@@ -439,22 +455,16 @@ async function loadMap() {
         `);
 
       }
-
-    });
-
-  } catch (err) {
-    console.log("Sales tax layer failed:", err);
-  }
+    },
+    'Sales tax'
+  );
 
 
   // NG911
-  try {
-
-    const res = await fetch('./static/NG911/ng911.geojson');
-    const data = await res.json();
-
-    ng911Layer = L.geoJSON(data, {
-
+  await loadGeoJson(
+    './static/NG911/ng911.geojson',
+    ng911Layer,
+    {
       renderer: L.canvas(),
 
       style: {
@@ -470,6 +480,7 @@ async function loadMap() {
 
         const county =
           feature.properties?.COUNTYNAME ||
+          feature.properties?.COUNTY ||
           "Unknown";
 
         layer.bindPopup(`
@@ -477,22 +488,16 @@ async function loadMap() {
         `);
 
       }
-
-    });
-
-  } catch (err) {
-    console.log("NG911 layer failed:", err);
-  }
+    },
+    'NG911'
+  );
 
 
   // WATER DISTRICTS
-  try {
-
-    const res = await fetch('./static/Water/water.geojson');
-    const data = await res.json();
-
-    waterLayer = L.geoJSON(data, {
-
+  await loadGeoJson(
+    './static/Water/water.geojson',
+    waterLayer,
+    {
       renderer: L.canvas(),
 
       style: {
@@ -507,6 +512,7 @@ async function loadMap() {
 
         const name =
           feature.properties?.PWSSNAME ||
+          feature.properties?.NAME ||
           "Unknown";
 
         layer.bindPopup(`
@@ -514,34 +520,71 @@ async function loadMap() {
         `);
 
       }
+    },
+    'Water'
+  );
+
+}
+
+
+map.on('zoomend', function() {
+
+  if (!parcelGeoJsonLayer || !map.hasLayer(parcelsLayer)) {
+    return;
+  }
+
+  const zoom = map.getZoom();
+
+  if (zoom >= 18 && !parcelLabelsVisible) {
+
+    parcelLabelsVisible = true;
+
+    let visibleCount = 0;
+
+    parcelGeoJsonLayer.eachLayer(function(layer) {
+
+      if (visibleCount > 250) {
+        return;
+      }
+
+      if (!layer.getBounds || !map.getBounds().intersects(layer.getBounds())) {
+        return;
+      }
+
+      const parcelNum = layer.feature.properties?.parcel_num || "";
+
+      if (parcelNum) {
+
+        layer.bindTooltip(parcelNum, {
+          permanent: true,
+          direction: 'center',
+          className: 'parcel-label'
+        });
+
+        visibleCount++;
+
+      }
 
     });
 
-  } catch (err) {
-    console.log("Water layer failed:", err);
   }
 
+  if (zoom < 18 && parcelLabelsVisible) {
 
-  // LAYER CONTROL
-  const overlays = {
-    "Roads": roadsLayer,
-    "Cities": citiesLayer,
-    "Townships": townshipsLayer,
-    "Flood Zones": floodLayer,
-    "School Districts": schoolLayer,
-    "Parcels": parcelsLayer,
-    "Sales Tax": salesTaxLayer,
-    "NG911": ng911Layer,
-    "Water Districts": waterLayer
-  };
+    parcelLabelsVisible = false;
 
-  L.control.layers(
-    { "OpenStreetMap": osm },
-    overlays,
-    { collapsed: false }
-  ).addTo(map);
+    parcelGeoJsonLayer.eachLayer(function(layer) {
 
-}
+      if (layer.getTooltip()) {
+        layer.unbindTooltip();
+      }
+
+    });
+
+  }
+
+});
+
 
 loadMap();
 
