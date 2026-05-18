@@ -1,3 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Clinton County GIS</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+
+  <style>
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+
+    .leaflet-control-layers {
+      font-size: 14px;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    .city-label,
+    .township-label,
+    .school-label,
+    .water-label,
+    .ambulance-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      font-weight: bold;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .city-label {
+      color: #4b0082;
+      font-size: 12px;
+    }
+
+    .township-label {
+      color: #0033aa;
+      font-size: 11px;
+    }
+
+    .school-label {
+      color: #006600;
+      font-size: 14px;
+    }
+
+    .water-label {
+      color: #005f87;
+      font-size: 14px;
+      text-shadow:
+        -1px -1px 0 #fff,
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff;
+    }
+
+    .ambulance-label {
+      color: #990000;
+      font-size: 14px;
+      text-shadow:
+        -1px -1px 0 #fff,
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff;
+    }
+
+    .info-panel {
+      position: absolute;
+      top: 10px;
+      left: 60px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.95);
+      padding: 10px 14px;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+      font-size: 14px;
+      max-width: 320px;
+    }
+
+    .info-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="info-panel">
+  <div class="info-title">Clinton County GIS</div>
+  Base infrastructure GIS viewer
+</div>
+
+<div id="map"></div>
+
+<script>
+
+const countyBounds = [
+  [39.36, -94.82],
+  [39.79, -94.10]
+];
+
+const map = L.map('map', {
+  maxBounds: countyBounds,
+  maxBoundsViscosity: 0.7,
+  preferCanvas: true
+});
+
+map.setView([39.55, -94.45], 11);
+
+const osm = L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }
+).addTo(map);
+
+L.control.scale().addTo(map);
+
+L.Control.geocoder({
+  defaultMarkGeocode: true
+}).addTo(map);
+
+const roadsLayer = L.layerGroup().addTo(map);
+const citiesLayer = L.layerGroup();
+const townshipsLayer = L.layerGroup();
+const floodLayer = L.layerGroup();
+const schoolLayer = L.layerGroup();
+const parcelsLayer = L.layerGroup();
+const salesTaxLayer = L.layerGroup();
+const waterLayer = L.layerGroup();
+const ambulanceLayer = L.layerGroup();
+
+const overlays = {
+  "Roads": roadsLayer,
+  "Cities": citiesLayer,
+  "Townships": townshipsLayer,
+  "Flood Zones": floodLayer,
+  "School Districts": schoolLayer,
+  "Parcels": parcelsLayer,
+  "Sales Tax": salesTaxLayer,
+  "Water Districts": waterLayer,
+  "Ambulance Districts": ambulanceLayer
+};
+
+L.control.layers(
+  { "OpenStreetMap": osm },
+  overlays,
+  { collapsed: false }
+).addTo(map);
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}
+
+function pointOnFeatureLatLng(feature) {
+
+  try {
+
+    const point = turf.pointOnFeature(feature);
+
+    return [
+      point.geometry.coordinates[1],
+      point.geometry.coordinates[0]
+    ];
+
+  } catch (err) {
+
+    return null;
+
+  }
+
+}
+
+async function loadLayer(url, target, options, label) {
+
+  try {
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const geo = L.geoJSON(data, options);
+
+    geo.addTo(target);
+
+    return geo;
+
+  } catch (err) {
+
+    console.error(label + " failed:", err);
+    return null;
+
+  }
+
+}
+
+async function loadMap() {
+
+  await loadLayer(
+    './static/Roads/roads.geojson',
+    roadsLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#666666',
+        weight: 0.7,
+        opacity: 0.35,
+        dashArray: '3,3'
+      }
+    },
+    'Roads'
+  );
+
+  await loadLayer(
+    './static/Cities/cities.geojson',
+    citiesLayer,
+    {
+      pointToLayer: (f, latlng) =>
+        L.circleMarker(latlng, {
+          radius: 5,
+          fillColor: '#7a00cc',
+          color: '#000',
+          weight: 1,
+          fillOpacity: 0.85
+        }),
+
+      onEachFeature: (f, layer) => {
+
+        if (f.properties?.NAME) {
+
+          layer.bindTooltip(f.properties.NAME, {
+            permanent: true,
+            className: 'city-label'
+          });
+
+        }
+
+      }
+    },
+    'Cities'
+  );
+
+  await loadLayer(
+    './static/Townships/townships.geojson',
+    townshipsLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#0044ff',
+        weight: 3,
+        opacity: 1,
+        fillColor: '#66a3ff',
+        fillOpacity: 0.08
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const name =
+          feature.properties?.NAME ||
+          feature.properties?.NAMELSAD ||
+          "Township";
+
+        layer.bindTooltip(name, {
+          permanent: true,
+          direction: 'center',
+          className: 'township-label'
+        });
+
+      }
+    },
+    'Townships'
+  );
+
+  await loadLayer(
+    './static/Floodzones/floodzones.geojson',
+    floodLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#0088ff',
+        weight: 1,
+        opacity: 0.7,
+        fillOpacity: 0
+      }
+    },
+    'Flood'
+  );
+
+  await loadLayer(
+    './static/school_districts/school_districts.geojson',
+    schoolLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#008800',
+        weight: 3,
+        opacity: 0.9,
+        dashArray: '8,4',
+        fillColor: '#b7e3b7',
+        fillOpacity: 0.04
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const name = feature.properties?.NAME || "";
+
+        if (name) {
+
+          layer.bindTooltip(name, {
+            permanent: true,
+            direction: 'center',
+            className: 'school-label'
+          });
+
+        }
+
+      }
+    },
+    'Schools'
+  );
+
+  await loadLayer(
+    './static/Water/water.geojson',
+    waterLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#006699',
+        weight: 2,
+        opacity: 1,
+        fillColor: '#66ccff',
+        fillOpacity: 0.15
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const name =
+          feature.properties?.PWSSNAME ||
+          "Water District";
+
+        const labelLatLng = pointOnFeatureLatLng(feature);
+
+        if (labelLatLng) {
+
+          const label = L.marker(labelLatLng, {
+            interactive: false,
+            icon: L.divIcon({
+              className: 'water-label',
+              html: escapeHtml(name),
+              iconSize: null
+            })
+          });
+
+          waterLayer.addLayer(label);
+
+        }
+
+      }
+    },
+    'Water'
+  );
+
   await loadLayer(
     './static/Ambulance/ambulance.geojson',
     ambulanceLayer,
@@ -108,3 +509,124 @@
     },
     'Ambulance'
   );
+
+  await loadLayer(
+    './static/Parcels/parcels.geojson',
+    parcelsLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#555555',
+        weight: 0.5,
+        opacity: 0.6,
+        fillOpacity: 0
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const props = feature.properties || {};
+
+        const owner =
+          props.owner ||
+          props.OWNER ||
+          'Unknown';
+
+        const parcel =
+          props.parcel_num ||
+          props.PARCEL ||
+          'Unknown';
+
+        layer.bindPopup(
+          '<b>Parcel:</b> ' + escapeHtml(parcel) + '<br>' +
+          '<b>Owner:</b> ' + escapeHtml(owner)
+        );
+
+      }
+    },
+    'Parcels'
+  );
+
+  await loadLayer(
+    './static/SalesTax/salestax.geojson',
+    salesTaxLayer,
+    {
+      renderer: L.canvas(),
+
+      style: function(feature) {
+
+        const props = feature.properties || {};
+
+        const local =
+          Number(props.LOCAL_RATE || 0);
+
+        const state =
+          Number(props.STATE_RATE || 4.225);
+
+        const total =
+          Number(props.TOTAL_RATE || (local + state));
+
+        if (total >= 9) {
+          return {
+            color: '#660000',
+            fillColor: '#cc0000',
+            weight: 2,
+            fillOpacity: 0.35
+          };
+        }
+
+        if (total >= 8) {
+          return {
+            color: '#994400',
+            fillColor: '#ff8800',
+            weight: 2,
+            fillOpacity: 0.28
+          };
+        }
+
+        return {
+          color: '#666600',
+          fillColor: '#ffff66',
+          weight: 2,
+          fillOpacity: 0.22
+        };
+
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const props = feature.properties || {};
+
+        const area =
+          props.NAME ||
+          'Sales Tax Area';
+
+        const local =
+          Number(props.LOCAL_RATE || 0);
+
+        const state =
+          Number(props.STATE_RATE || 4.225);
+
+        const total =
+          Number(props.TOTAL_RATE || (local + state));
+
+        layer.bindPopup(
+          '<b>' + escapeHtml(area) + '</b><br>' +
+          'Missouri State: ' + state.toFixed(3) + '%<br>' +
+          'Local: ' + local.toFixed(3) + '%<br>' +
+          '<b>Total: ' + total.toFixed(3) + '%</b>'
+        );
+
+      }
+    },
+    'Sales Tax'
+  );
+
+}
+
+loadMap();
+
+</script>
+
+</body>
+</html>
