@@ -44,54 +44,52 @@
     }
 
     .township-label {
-      background: rgba(255,255,255,0.7);
+      background: transparent;
       border: none;
       box-shadow: none;
       color: #0033aa;
       font-size: 11px;
       font-weight: bold;
-      padding: 2px 4px;
       white-space: nowrap;
     }
 
     .school-label {
-      background: rgba(255,255,255,0.92);
-      border: 1px solid rgba(0,100,0,0.35);
-      border-radius: 4px;
-      box-shadow: 0 0 4px rgba(0,0,0,0.2);
+      background: transparent;
+      border: none;
+      box-shadow: none;
       color: #006600;
       font-size: 14px;
       font-weight: bold;
-      padding: 4px 10px;
       white-space: nowrap;
       text-align: center;
     }
 
     .water-label {
-      background: rgba(255,255,255,0.92);
-      border: 1px solid rgba(0,90,130,0.4);
-      border-radius: 4px;
-      box-shadow: 0 0 4px rgba(0,0,0,0.2);
+      background: transparent;
+      border: none;
+      box-shadow: none;
       color: #005f87;
       font-size: 14px;
       font-weight: bold;
-      padding: 4px 10px;
       white-space: nowrap;
       text-align: center;
       width: auto !important;
       height: auto !important;
       line-height: 1.2;
+      text-shadow:
+        -1px -1px 0 #fff,
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff;
     }
 
     .parcel-label {
-      background: rgba(255,255,255,0.92);
-      border: 1px solid rgba(0,0,0,0.15);
-      border-radius: 3px;
+      background: transparent;
+      border: none;
       box-shadow: none;
       color: #111;
       font-size: 10px;
       font-weight: bold;
-      padding: 1px 3px;
       white-space: nowrap;
     }
 
@@ -228,7 +226,7 @@ async function loadLayer(url, target, options, label) {
 
     geo.addTo(target);
 
-    return data;
+    return geo;
 
   } catch (err) {
 
@@ -341,43 +339,6 @@ function salesTaxPopupHtml(matches) {
   `;
 
 }
-
-
-map.on('click', function(e) {
-
-  if (!map.hasLayer(salesTaxLayer)) {
-    return;
-  }
-
-  const matches = [];
-
-  salesTaxLayer.eachLayer(function(layer) {
-
-    if (!layer.feature) {
-      return;
-    }
-
-    try {
-
-      if (
-        layer.getBounds &&
-        layer.getBounds().contains(e.latlng)
-      ) {
-
-        matches.push(layer.feature);
-
-      }
-
-    } catch(err) {}
-
-  });
-
-  L.popup()
-    .setLatLng(e.latlng)
-    .setContent(salesTaxPopupHtml(matches))
-    .openOn(map);
-
-});
 
 
 async function loadMap() {
@@ -538,20 +499,6 @@ async function loadMap() {
         opacity: 0.45,
         fillColor: '#cccccc',
         fillOpacity: 0.02
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        const parcelNum = feature.properties?.parcel_num || "";
-        const owner = feature.properties?.deedholder || "";
-        const acres = feature.properties?.deeded_acr || "";
-
-        layer.bindPopup(`
-          <b>Parcel:</b> ${parcelNum}<br>
-          <b>Owner:</b> ${owner}<br>
-          <b>Acres:</b> ${acres}
-        `);
-
       }
     },
     'Parcels'
@@ -559,7 +506,7 @@ async function loadMap() {
 
 
   // SALES TAX
-  const salesTaxData = await loadLayer(
+  const salesGeo = await loadLayer(
     './static/Sales_tax/sales_tax.geojson',
     salesTaxLayer,
     {
@@ -571,14 +518,47 @@ async function loadMap() {
         opacity: 1,
         fillColor: '#ffaa33',
         fillOpacity: 0.08
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        salesTaxFeatures.push(layer);
+
+        layer.on('click', function(e) {
+
+          const matches = [];
+
+          salesTaxFeatures.forEach(function(testLayer) {
+
+            try {
+
+              if (
+                testLayer.feature &&
+                turf.booleanPointInPolygon(
+                  turf.point([e.latlng.lng, e.latlng.lat]),
+                  testLayer.feature
+                )
+              ) {
+
+                matches.push(testLayer.feature);
+
+              }
+
+            } catch(err) {}
+
+          });
+
+          L.popup()
+            .setLatLng(e.latlng)
+            .setContent(salesTaxPopupHtml(matches))
+            .openOn(map);
+
+        });
+
       }
     },
     'Sales Tax'
   );
-
-  if (salesTaxData && salesTaxData.features) {
-    salesTaxFeatures = salesTaxData.features;
-  }
 
 
   // WATER
@@ -601,8 +581,6 @@ async function loadMap() {
         const name =
           feature.properties?.PWSSNAME ||
           "Water District";
-
-        layer.bindPopup(name);
 
         const labelLatLng = pointOnFeatureLatLng(feature);
 
