@@ -130,6 +130,13 @@
       font-weight: bold;
       background: #f5f5f5;
     }
+
+    .tax-total {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 2px solid #ccc;
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -143,6 +150,8 @@
 <div id="map"></div>
 
 <script>
+
+const MISSOURI_STATE_RATE = 4.225;
 
 const countyBounds = [
   [39.36, -94.82],
@@ -282,7 +291,7 @@ function formatRate(value) {
     return escapeHtml(value);
   }
 
-  return number.toString();
+  return number.toFixed(3);
 
 }
 
@@ -299,45 +308,68 @@ function salesTaxPopupHtml(matches) {
 
     const name = escapeHtml(p.JURISDICTION_NAME || "Unnamed");
     const type = escapeHtml(p.JURISDICTION_TYPE || "");
-    const sales = formatRate(p.SALES_TAX);
-    const useTax = formatRate(p.USE_TAX);
+    const sales = Number(p.SALES_TAX || 0);
 
     return `
       <tr>
         <td>${name}</td>
         <td>${type}</td>
-        <td>${sales}%</td>
-        <td>${useTax}%</td>
+        <td>${formatRate(sales)}%</td>
       </tr>
     `;
 
   }).join("");
 
-  const totalSales = matches.reduce((sum, feature) => {
+  const localTotal = matches.reduce((sum, feature) => {
+
     const value = Number(feature.properties?.SALES_TAX || 0);
+
     return sum + (Number.isNaN(value) ? 0 : value);
+
   }, 0);
+
+  const combinedTotal = MISSOURI_STATE_RATE + localTotal;
 
   return `
     <div class="tax-popup">
-      <b>Sales tax jurisdictions at this point</b><br>
-      <b>Total listed local add-on sales tax:</b> ${Number(totalSales.toFixed(3))}%<br><br>
+
+      <b>Sales tax jurisdictions at this point</b>
+
       <table>
         <thead>
           <tr>
             <th>Jurisdiction</th>
             <th>Type</th>
-            <th>Sales</th>
-            <th>Use</th>
+            <th>Rate</th>
           </tr>
         </thead>
+
         <tbody>
+
+          <tr>
+            <td>Missouri State</td>
+            <td>STATE</td>
+            <td>${formatRate(MISSOURI_STATE_RATE)}%</td>
+          </tr>
+
           ${rows}
+
         </tbody>
       </table>
+
+      <div class="tax-total">
+        <b>Missouri State:</b>
+        ${formatRate(MISSOURI_STATE_RATE)}%<br>
+
+        <b>Local Add-ons:</b>
+        ${formatRate(localTotal)}%<br>
+
+        <b>Combined Total:</b>
+        ${formatRate(combinedTotal)}%
+      </div>
+
     </div>
   `;
-
 }
 
 
@@ -506,7 +538,7 @@ async function loadMap() {
 
 
   // SALES TAX
-  const salesGeo = await loadLayer(
+  await loadLayer(
     './static/Sales_tax/sales_tax.geojson',
     salesTaxLayer,
     {
