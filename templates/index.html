@@ -146,6 +146,9 @@ let townshipsLayer;
 let floodLayer;
 let schoolLayer;
 let parcelsLayer;
+let salesTaxLayer;
+let ng911Layer;
+let waterLayer;
 
 let parcelLabelsVisible = false;
 
@@ -397,66 +400,125 @@ async function loadMap() {
 
     });
 
-    map.on('zoomend', function() {
+  } catch (err) {
+    console.log("Parcel layer failed:", err);
+  }
 
-      if (!map.hasLayer(parcelsLayer)) {
-        return;
-      }
 
-      const zoom = map.getZoom();
+  // SALES TAX
+  try {
 
-      if (zoom >= 18 && !parcelLabelsVisible) {
+    const res = await fetch('./static/SalesTax/sales_tax.geojson');
+    const data = await res.json();
 
-        parcelLabelsVisible = true;
+    salesTaxLayer = L.geoJSON(data, {
 
-        let visibleCount = 0;
+      renderer: L.canvas(),
 
-        parcelsLayer.eachLayer(function(layer) {
+      style: {
+        color: '#cc5500',
+        weight: 1.5,
+        opacity: 0.9,
+        fillColor: '#ff9900',
+        fillOpacity: 0.10
+      },
 
-          if (visibleCount > 250) {
-            return;
-          }
+      onEachFeature: function(feature, layer) {
 
-          if (!map.getBounds().intersects(layer.getBounds())) {
-            return;
-          }
+        const name =
+          feature.properties?.JURISDICTION_NAME ||
+          "Unknown";
 
-          const parcelNum = layer.feature.properties?.parcel_num || "";
+        const rate =
+          feature.properties?.SALES_TAX ||
+          "Unknown";
 
-          if (parcelNum) {
-
-            layer.bindTooltip(parcelNum, {
-              permanent: true,
-              direction: 'center',
-              className: 'parcel-label'
-            });
-
-            visibleCount++;
-
-          }
-
-        });
-
-      }
-
-      if (zoom < 18 && parcelLabelsVisible) {
-
-        parcelLabelsVisible = false;
-
-        parcelsLayer.eachLayer(function(layer) {
-
-          if (layer.getTooltip()) {
-            layer.unbindTooltip();
-          }
-
-        });
+        layer.bindPopup(`
+          <b>Jurisdiction:</b> ${name}<br>
+          <b>Sales Tax:</b> ${rate}%
+        `);
 
       }
 
     });
 
   } catch (err) {
-    console.log("Parcel layer failed:", err);
+    console.log("Sales tax layer failed:", err);
+  }
+
+
+  // NG911
+  try {
+
+    const res = await fetch('./static/NG911/ng911.geojson');
+    const data = await res.json();
+
+    ng911Layer = L.geoJSON(data, {
+
+      renderer: L.canvas(),
+
+      style: {
+        color: '#ff00aa',
+        weight: 4,
+        opacity: 1,
+        dashArray: '8,6',
+        fillColor: '#ff66cc',
+        fillOpacity: 0.04
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const county =
+          feature.properties?.COUNTYNAME ||
+          "Unknown";
+
+        layer.bindPopup(`
+          <b>NG911 County:</b> ${county}
+        `);
+
+      }
+
+    });
+
+  } catch (err) {
+    console.log("NG911 layer failed:", err);
+  }
+
+
+  // WATER DISTRICTS
+  try {
+
+    const res = await fetch('./static/Water/water.geojson');
+    const data = await res.json();
+
+    waterLayer = L.geoJSON(data, {
+
+      renderer: L.canvas(),
+
+      style: {
+        color: '#006699',
+        weight: 2,
+        opacity: 0.8,
+        fillColor: '#66ccff',
+        fillOpacity: 0.08
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const name =
+          feature.properties?.PWSSNAME ||
+          "Unknown";
+
+        layer.bindPopup(`
+          <b>Water District:</b> ${name}
+        `);
+
+      }
+
+    });
+
+  } catch (err) {
+    console.log("Water layer failed:", err);
   }
 
 
@@ -467,7 +529,10 @@ async function loadMap() {
     "Townships": townshipsLayer,
     "Flood Zones": floodLayer,
     "School Districts": schoolLayer,
-    "Parcels": parcelsLayer
+    "Parcels": parcelsLayer,
+    "Sales Tax": salesTaxLayer,
+    "NG911": ng911Layer,
+    "Water Districts": waterLayer
   };
 
   L.control.layers(
