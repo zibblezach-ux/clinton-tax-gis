@@ -323,7 +323,7 @@ function salesTaxPopupHtml(matches) {
   return `
     <div class="tax-popup">
       <b>Sales tax jurisdictions at this point</b><br>
-      <b>Total listed local sales tax:</b> ${Number(totalSales.toFixed(3))}%<br><br>
+      <b>Total listed local add-on sales tax:</b> ${Number(totalSales.toFixed(3))}%<br><br>
       <table>
         <thead>
           <tr>
@@ -341,6 +341,43 @@ function salesTaxPopupHtml(matches) {
   `;
 
 }
+
+
+map.on('click', function(e) {
+
+  if (!map.hasLayer(salesTaxLayer)) {
+    return;
+  }
+
+  const matches = [];
+
+  salesTaxLayer.eachLayer(function(layer) {
+
+    if (!layer.feature) {
+      return;
+    }
+
+    try {
+
+      if (
+        layer.getBounds &&
+        layer.getBounds().contains(e.latlng)
+      ) {
+
+        matches.push(layer.feature);
+
+      }
+
+    } catch(err) {}
+
+  });
+
+  L.popup()
+    .setLatLng(e.latlng)
+    .setContent(salesTaxPopupHtml(matches))
+    .openOn(map);
+
+});
 
 
 async function loadMap() {
@@ -438,8 +475,8 @@ async function loadMap() {
       style: {
         color: '#0088ff',
         weight: 1,
-        fillColor: '#00aaff',
-        fillOpacity: 0.12
+        opacity: 0.7,
+        fillOpacity: 0
       }
     },
     'Flood'
@@ -534,38 +571,6 @@ async function loadMap() {
         opacity: 1,
         fillColor: '#ffaa33',
         fillOpacity: 0.08
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        layer.on('click', function(e) {
-
-          const point = turf.point([
-            e.latlng.lng,
-            e.latlng.lat
-          ]);
-
-          const matches = salesTaxFeatures.filter(f => {
-
-            try {
-
-              return turf.booleanPointInPolygon(point, f);
-
-            } catch(err) {
-
-              return false;
-
-            }
-
-          });
-
-          L.popup()
-            .setLatLng(e.latlng)
-            .setContent(salesTaxPopupHtml(matches))
-            .openOn(map);
-
-        });
-
       }
     },
     'Sales Tax'
