@@ -395,17 +395,28 @@ async function loadMap() {
       onEachFeature: function(feature, layer) {
 
         const name =
-          feature.properties?.NAME ||
-          feature.properties?.JURISDICTI ||
+          feature.properties?.JURISDICTION_NAME ||
           "Sales Tax Area";
 
-        layer.bindPopup(name);
+        const rate =
+          feature.properties?.SALES_TAX || 0;
 
-        layer.bindTooltip(name, {
-          permanent: true,
-          direction: 'center',
-          className: 'school-label'
+        layer.bindPopup(`
+          <b>${name}</b><br>
+          Sales Tax: ${rate}%
+        `);
+
+        const center = layer.getBounds().getCenter();
+
+        const label = L.marker(center, {
+          interactive: false,
+          icon: L.divIcon({
+            className: 'school-label',
+            html: name
+          })
         });
+
+        salesTaxLayer.addLayer(label);
 
       }
     },
@@ -436,7 +447,13 @@ async function loadMap() {
 
         layer.bindPopup(name);
 
-        const center = layer.getBounds().getCenter();
+        let center;
+
+        if (layer.getCenter) {
+          center = layer.getCenter();
+        } else {
+          center = layer.getBounds().getCenter();
+        }
 
         const label = L.marker(center, {
           interactive: false,
