@@ -14,7 +14,6 @@
   <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 
   <style>
-
     html, body {
       margin: 0;
       padding: 0;
@@ -51,6 +50,7 @@
       color: #0033aa;
       font-size: 11px;
       font-weight: bold;
+      white-space: nowrap;
     }
 
     .school-label {
@@ -60,6 +60,8 @@
       color: #006600;
       font-size: 14px;
       font-weight: bold;
+      white-space: nowrap;
+      text-align: center;
     }
 
     .water-label {
@@ -69,6 +71,11 @@
       color: #005f87;
       font-size: 14px;
       font-weight: bold;
+      white-space: nowrap;
+      text-align: center;
+      width: auto !important;
+      height: auto !important;
+      line-height: 1.2;
       text-shadow:
         -1px -1px 0 #fff,
          1px -1px 0 #fff,
@@ -76,18 +83,14 @@
          1px  1px 0 #fff;
     }
 
-    .ambulance-label {
+    .parcel-label {
       background: transparent;
       border: none;
       box-shadow: none;
-      color: #990000;
-      font-size: 14px;
+      color: #111;
+      font-size: 10px;
       font-weight: bold;
-      text-shadow:
-        -1px -1px 0 #fff,
-         1px -1px 0 #fff,
-        -1px  1px 0 #fff,
-         1px  1px 0 #fff;
+      white-space: nowrap;
     }
 
     .info-panel {
@@ -109,6 +112,31 @@
       margin-bottom: 6px;
     }
 
+    .tax-popup table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+    }
+
+    .tax-popup th,
+    .tax-popup td {
+      border-bottom: 1px solid #ddd;
+      padding: 3px 5px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .tax-popup th {
+      font-weight: bold;
+      background: #f5f5f5;
+    }
+
+    .tax-total {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 2px solid #ccc;
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -122,6 +150,8 @@
 <div id="map"></div>
 
 <script>
+
+const MISSOURI_STATE_RATE = 4.225;
 
 const countyBounds = [
   [39.36, -94.82],
@@ -150,16 +180,22 @@ L.Control.geocoder({
   defaultMarkGeocode: true
 }).addTo(map);
 
+
+// LAYER GROUPS
 const roadsLayer = L.layerGroup().addTo(map);
 const citiesLayer = L.layerGroup();
 const townshipsLayer = L.layerGroup();
 const floodLayer = L.layerGroup();
 const schoolLayer = L.layerGroup();
 const parcelsLayer = L.layerGroup();
+
 const salesTaxLayer = L.layerGroup();
 const waterLayer = L.layerGroup();
-const ambulanceLayer = L.layerGroup();
 
+let salesTaxFeatures = [];
+
+
+// CHECKBOXES
 const overlays = {
   "Roads": roadsLayer,
   "Cities": citiesLayer,
@@ -168,8 +204,7 @@ const overlays = {
   "School Districts": schoolLayer,
   "Parcels": parcelsLayer,
   "Sales Tax": salesTaxLayer,
-  "Water Districts": waterLayer,
-  "Ambulance Districts": ambulanceLayer
+  "Water Districts": waterLayer
 };
 
 L.control.layers(
@@ -178,16 +213,39 @@ L.control.layers(
   { collapsed: false }
 ).addTo(map);
 
-function escapeHtml(value) {
 
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+// GENERIC LOADER
+async function loadLayer(url, target, options, label) {
+
+  try {
+
+    console.log("Loading:", url);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    console.log(label, "loaded");
+
+    const geo = L.geoJSON(data, options);
+
+    geo.addTo(target);
+
+    return geo;
+
+  } catch (err) {
+
+    console.error(label + " failed:", err);
+    return null;
+
+  }
 
 }
+
 
 function pointOnFeatureLatLng(feature) {
 
@@ -208,35 +266,116 @@ function pointOnFeatureLatLng(feature) {
 
 }
 
-async function loadLayer(url, target, options, label) {
 
-  try {
+function escapeHtml(value) {
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    const geo = L.geoJSON(data, options);
-
-    geo.addTo(target);
-
-    return geo;
-
-  } catch (err) {
-
-    console.error(label + " failed:", err);
-    return null;
-
-  }
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
 }
 
+
+function formatRate(value) {
+
+  if (value === null || value === undefined || value === "") {
+    return "0";
+  }
+
+  const number = Number(value);
+
+  if (Number.isNaN(number)) {
+    return escapeHtml(value);
+  }
+
+  return number.toFixed(3);
+
+}
+
+
+function salesTaxPopupHtml(matches) {
+
+  if (!matches.length) {
+    return "<b>No sales tax polygon found at this point.</b>";
+  }
+
+  const rows = matches.map(feature => {
+
+    const p = feature.properties || {};
+
+    const name = escapeHtml(p.JURISDICTION_NAME || "Unnamed");
+    const type = escapeHtml(p.JURISDICTION_TYPE || "");
+    const sales = Number(p.SALES_TAX || 0);
+
+    return `
+      <tr>
+        <td>${name}</td>
+        <td>${type}</td>
+        <td>${formatRate(sales)}%</td>
+      </tr>
+    `;
+
+  }).join("");
+
+  const localTotal = matches.reduce((sum, feature) => {
+
+    const value = Number(feature.properties?.SALES_TAX || 0);
+
+    return sum + (Number.isNaN(value) ? 0 : value);
+
+  }, 0);
+
+  const combinedTotal = MISSOURI_STATE_RATE + localTotal;
+
+  return `
+    <div class="tax-popup">
+
+      <b>Sales tax jurisdictions at this point</b>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Jurisdiction</th>
+            <th>Type</th>
+            <th>Rate</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr>
+            <td>Missouri State</td>
+            <td>STATE</td>
+            <td>${formatRate(MISSOURI_STATE_RATE)}%</td>
+          </tr>
+
+          ${rows}
+
+        </tbody>
+      </table>
+
+      <div class="tax-total">
+        <b>Missouri State:</b>
+        ${formatRate(MISSOURI_STATE_RATE)}%<br>
+
+        <b>Local Add-ons:</b>
+        ${formatRate(localTotal)}%<br>
+
+        <b>Combined Total:</b>
+        ${formatRate(combinedTotal)}%
+      </div>
+
+    </div>
+  `;
+}
+
+
 async function loadMap() {
 
+  // ROADS
   await loadLayer(
     './static/Roads/roads.geojson',
     roadsLayer,
@@ -253,6 +392,8 @@ async function loadMap() {
     'Roads'
   );
 
+
+  // CITIES
   await loadLayer(
     './static/Cities/cities.geojson',
     citiesLayer,
@@ -282,6 +423,8 @@ async function loadMap() {
     'Cities'
   );
 
+
+  // TOWNSHIPS
   await loadLayer(
     './static/Townships/townships.geojson',
     townshipsLayer,
@@ -314,6 +457,8 @@ async function loadMap() {
     'Townships'
   );
 
+
+  // FLOOD
   await loadLayer(
     './static/Floodzones/floodzones.geojson',
     floodLayer,
@@ -330,6 +475,8 @@ async function loadMap() {
     'Flood'
   );
 
+
+  // SCHOOLS
   await loadLayer(
     './static/school_districts/school_districts.geojson',
     schoolLayer,
@@ -351,11 +498,17 @@ async function loadMap() {
 
         if (name) {
 
-          layer.bindTooltip(name, {
+          let tooltipOptions = {
             permanent: true,
             direction: 'center',
             className: 'school-label'
-          });
+          };
+
+          if (name.includes("Osborn")) {
+            tooltipOptions.offset = [55, 14];
+          }
+
+          layer.bindTooltip(name, tooltipOptions);
 
         }
 
@@ -364,6 +517,83 @@ async function loadMap() {
     'Schools'
   );
 
+
+  // PARCELS
+  await loadLayer(
+    './static/Parcels/parcels.geojson',
+    parcelsLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#444444',
+        weight: 0.35,
+        opacity: 0.45,
+        fillColor: '#cccccc',
+        fillOpacity: 0.02
+      }
+    },
+    'Parcels'
+  );
+
+
+  // SALES TAX
+  await loadLayer(
+    './static/Sales_tax/sales_tax.geojson',
+    salesTaxLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#ff8800',
+        weight: 2,
+        opacity: 1,
+        fillColor: '#ffaa33',
+        fillOpacity: 0.08
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        salesTaxFeatures.push(layer);
+
+        layer.on('click', function(e) {
+
+          const matches = [];
+
+          salesTaxFeatures.forEach(function(testLayer) {
+
+            try {
+
+              if (
+                testLayer.feature &&
+                turf.booleanPointInPolygon(
+                  turf.point([e.latlng.lng, e.latlng.lat]),
+                  testLayer.feature
+                )
+              ) {
+
+                matches.push(testLayer.feature);
+
+              }
+
+            } catch(err) {}
+
+          });
+
+          L.popup()
+            .setLatLng(e.latlng)
+            .setContent(salesTaxPopupHtml(matches))
+            .openOn(map);
+
+        });
+
+      }
+    },
+    'Sales Tax'
+  );
+
+
+  // WATER
   await loadLayer(
     './static/Water/water.geojson',
     waterLayer,
@@ -404,155 +634,6 @@ async function loadMap() {
       }
     },
     'Water'
-  );
-
-  await loadLayer(
-    './static/Ambulance/ambulance.geojson',
-    ambulanceLayer,
-    {
-      renderer: L.canvas(),
-
-      style: {
-        color: '#990000',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.35
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        const name =
-          feature.properties?.name ||
-          feature.properties?.NAME ||
-          "Ambulance District";
-
-        layer.bindPopup(name);
-
-        const labelLatLng = pointOnFeatureLatLng(feature);
-
-        if (labelLatLng) {
-
-          const label = L.marker(labelLatLng, {
-            interactive: false,
-            icon: L.divIcon({
-              className: 'ambulance-label',
-              html: escapeHtml(name),
-              iconSize: null
-            })
-          });
-
-          ambulanceLayer.addLayer(label);
-
-        }
-
-      }
-    },
-    'Ambulance'
-  );
-
-  await loadLayer(
-    './static/Parcels/parcels.geojson',
-    parcelsLayer,
-    {
-      renderer: L.canvas(),
-
-      style: {
-        color: '#555555',
-        weight: 0.5,
-        opacity: 0.6,
-        fillOpacity: 0
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        const props = feature.properties || {};
-
-        const owner =
-          props.owner ||
-          props.OWNER ||
-          props.deedholder ||
-          'Unknown';
-
-        const parcel =
-          props.parcel_num ||
-          props.PARCEL ||
-          'Unknown';
-
-        layer.bindPopup(
-          '<b>Parcel:</b> ' + escapeHtml(parcel) + '<br>' +
-          '<b>Owner:</b> ' + escapeHtml(owner)
-        );
-
-      }
-    },
-    'Parcels'
-  );
-
-  await loadLayer(
-    './static/SalesTax/salestax.geojson',
-    salesTaxLayer,
-    {
-      renderer: L.canvas(),
-
-      style: function(feature) {
-
-        const total =
-          Number(feature.properties?.TOTAL_RATE || 0);
-
-        if (total >= 9) {
-          return {
-            color: '#660000',
-            fillColor: '#cc0000',
-            weight: 2,
-            fillOpacity: 0.35
-          };
-        }
-
-        if (total >= 8) {
-          return {
-            color: '#994400',
-            fillColor: '#ff8800',
-            weight: 2,
-            fillOpacity: 0.28
-          };
-        }
-
-        return {
-          color: '#666600',
-          fillColor: '#ffff66',
-          weight: 2,
-          fillOpacity: 0.22
-        };
-
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        const props = feature.properties || {};
-
-        const city =
-          props.NAME ||
-          'Area';
-
-        const local =
-          Number(props.LOCAL_RATE || 0).toFixed(3);
-
-        const state =
-          Number(props.STATE_RATE || 4.225).toFixed(3);
-
-        const total =
-          Number(props.TOTAL_RATE || 0).toFixed(3);
-
-        layer.bindPopup(
-          '<b>' + escapeHtml(city) + '</b><br>' +
-          'Missouri State: ' + state + '%<br>' +
-          'Local: ' + local + '%<br>' +
-          '<b>Total: ' + total + '%</b>'
-        );
-
-      }
-    },
-    'Sales Tax'
   );
 
 }
