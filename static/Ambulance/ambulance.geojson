@@ -1,4 +1,181 @@
 {
   "type": "FeatureCollection",
-  "features": []
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Cameron Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.256,39.732],
+          [-94.120,39.732],
+          [-94.120,39.640],
+          [-94.256,39.640],
+          [-94.256,39.732]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Easton Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.520,39.745],
+          [-94.410,39.745],
+          [-94.410,39.665],
+          [-94.520,39.665],
+          [-94.520,39.745]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Edgerton Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.510,39.525],
+          [-94.390,39.525],
+          [-94.390,39.445],
+          [-94.510,39.445],
+          [-94.510,39.525]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Gower Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.640,39.610],
+          [-94.510,39.610],
+          [-94.510,39.510],
+          [-94.640,39.510],
+          [-94.640,39.610]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Holt Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.390,39.470],
+          [-94.260,39.470],
+          [-94.260,39.390],
+          [-94.390,39.390],
+          [-94.390,39.470]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Lathrop Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.430,39.600],
+          [-94.290,39.600],
+          [-94.290,39.500],
+          [-94.430,39.500],
+          [-94.430,39.600]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Lawson Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.240,39.470],
+          [-94.120,39.470],
+          [-94.120,39.390],
+          [-94.240,39.390],
+          [-94.240,39.470]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Osborn Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.330,39.750],
+          [-94.220,39.750],
+          [-94.220,39.660],
+          [-94.330,39.660],
+          [-94.330,39.750]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Plattsburg Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.520,39.590],
+          [-94.350,39.590],
+          [-94.350,39.460],
+          [-94.520,39.460],
+          [-94.520,39.590]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Stewartsville Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.490,39.760],
+          [-94.360,39.760],
+          [-94.360,39.670],
+          [-94.490,39.670],
+          [-94.490,39.760]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "NAME": "Trimble/Edgerton Ambulance District"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-94.610,39.470],
+          [-94.470,39.470],
+          [-94.470,39.370],
+          [-94.610,39.370],
+          [-94.610,39.470]
+        ]]
+      }
+    }
+  ]
 }
