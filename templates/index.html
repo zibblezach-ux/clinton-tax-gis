@@ -104,8 +104,6 @@
 <div class="info-panel">
   <div class="info-title">Clinton County GIS</div>
   Base infrastructure GIS viewer
-  <br><br>
-  <strong>Tip:</strong> Click parcels for owner and acreage details
 </div>
 
 <div id="map"></div>
@@ -140,27 +138,19 @@ L.Control.geocoder({
 }).addTo(map);
 
 
-// EMPTY LAYER GROUPS FIRST
-// This guarantees the checkbox control appears even if a GeoJSON file fails to load.
-
-const countyLayer = L.layerGroup();
+// LAYER GROUPS
 const roadsLayer = L.layerGroup().addTo(map);
 const citiesLayer = L.layerGroup();
 const townshipsLayer = L.layerGroup();
 const floodLayer = L.layerGroup();
 const schoolLayer = L.layerGroup();
 const parcelsLayer = L.layerGroup();
+
 const salesTaxLayer = L.layerGroup();
-const ng911Layer = L.layerGroup();
 const waterLayer = L.layerGroup();
 
-let parcelGeoJsonLayer = null;
-let parcelLabelsVisible = false;
 
-
-// LAYER CONTROL
-// Only Roads is checked at startup because only roadsLayer is added to the map above.
-
+// CHECKBOXES
 const overlays = {
   "Roads": roadsLayer,
   "Cities": citiesLayer,
@@ -169,7 +159,6 @@ const overlays = {
   "School Districts": schoolLayer,
   "Parcels": parcelsLayer,
   "Sales Tax": salesTaxLayer,
-  "NG911": ng911Layer,
   "Water Districts": waterLayer
 };
 
@@ -180,27 +169,30 @@ L.control.layers(
 ).addTo(map);
 
 
-async function loadGeoJson(path, targetLayer, options, label) {
+// GENERIC LOADER
+async function loadLayer(url, target, options, label) {
 
   try {
 
-    const res = await fetch(path);
+    console.log("Loading:", url);
 
-    if (!res.ok) {
-      throw new Error(`${res.status} ${res.statusText}`);
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
 
-    const data = await res.json();
+    const data = await response.json();
 
-    const geoJsonLayer = L.geoJSON(data, options);
-    geoJsonLayer.addTo(targetLayer);
+    console.log(label, "loaded");
 
-    return geoJsonLayer;
+    const geo = L.geoJSON(data, options);
+
+    geo.addTo(target);
 
   } catch (err) {
 
-    console.log(`${label} layer failed:`, err);
-    return null;
+    console.error(label + " failed:", err);
 
   }
 
@@ -209,23 +201,8 @@ async function loadGeoJson(path, targetLayer, options, label) {
 
 async function loadMap() {
 
-  // COUNTY
-  await loadGeoJson(
-    './static/clinton_boundary.geojson',
-    countyLayer,
-    {
-      style: {
-        color: '#ff0000',
-        weight: 3,
-        fillOpacity: 0.02
-      }
-    },
-    'County'
-  );
-
-
   // ROADS
-  await loadGeoJson(
+  await loadLayer(
     './static/Roads/roads.geojson',
     roadsLayer,
     {
@@ -238,12 +215,12 @@ async function loadMap() {
         dashArray: '3,3'
       }
     },
-    'Road'
+    'Roads'
   );
 
 
   // CITIES
-  await loadGeoJson(
+  await loadLayer(
     './static/Cities/cities.geojson',
     citiesLayer,
     {
@@ -269,12 +246,12 @@ async function loadMap() {
 
       }
     },
-    'City'
+    'Cities'
   );
 
 
   // TOWNSHIPS
-  await loadGeoJson(
+  await loadLayer(
     './static/Townships/townships.geojson',
     townshipsLayer,
     {
@@ -303,50 +280,30 @@ async function loadMap() {
 
       }
     },
-    'Township'
+    'Townships'
   );
 
 
-  // FLOOD ZONES
-  await loadGeoJson(
+  // FLOOD
+  await loadLayer(
     './static/Floodzones/floodzones.geojson',
     floodLayer,
     {
       renderer: L.canvas(),
 
-      style: function(feature) {
-
-        const zone =
-          feature.properties?.FLD_ZONE ||
-          feature.properties?.ZONE ||
-          "";
-
-        if (zone === "AE" || zone === "A") {
-
-          return {
-            color: '#0088ff',
-            weight: 1,
-            fillColor: '#00aaff',
-            fillOpacity: 0.20
-          };
-
-        }
-
-        return {
-          color: '#66ccff',
-          weight: 0.4,
-          fillColor: '#99ddff',
-          fillOpacity: 0.01
-        };
-
+      style: {
+        color: '#0088ff',
+        weight: 1,
+        fillColor: '#00aaff',
+        fillOpacity: 0.12
       }
     },
     'Flood'
   );
 
 
-  // SCHOOL DISTRICTS
-  await loadGeoJson(
+  // SCHOOLS
+  await loadLayer(
     './static/school_districts/school_districts.geojson',
     schoolLayer,
     {
@@ -369,10 +326,8 @@ async function loadMap() {
 
           let tooltipOptions = {
             permanent: true,
-            sticky: false,
             direction: 'center',
-            className: 'school-label',
-            opacity: 1
+            className: 'school-label'
           };
 
           if (name.includes("Osborn")) {
@@ -385,12 +340,12 @@ async function loadMap() {
 
       }
     },
-    'School'
+    'Schools'
   );
 
 
   // PARCELS
-  parcelGeoJsonLayer = await loadGeoJson(
+  await loadLayer(
     './static/Parcels/parcels.geojson',
     parcelsLayer,
     {
@@ -418,83 +373,48 @@ async function loadMap() {
 
       }
     },
-    'Parcel'
+    'Parcels'
   );
 
 
   // SALES TAX
-  await loadGeoJson(
-    './static/SalesTax/sales_tax.geojson',
+  await loadLayer(
+    './static/Sales_tax/sales_tax.geojson',
     salesTaxLayer,
     {
       renderer: L.canvas(),
 
       style: {
-        color: '#cc5500',
-        weight: 1.5,
-        opacity: 0.9,
-        fillColor: '#ff9900',
-        fillOpacity: 0.10
+        color: '#ff8800',
+        weight: 2,
+        opacity: 1,
+        fillColor: '#ffaa33',
+        fillOpacity: 0.18
       },
 
       onEachFeature: function(feature, layer) {
 
         const name =
-          feature.properties?.JURISDICTION_NAME ||
           feature.properties?.NAME ||
-          "Unknown";
+          feature.properties?.JURISDICTI ||
+          "Sales Tax Area";
 
-        const rate =
-          feature.properties?.SALES_TAX ||
-          feature.properties?.RATE ||
-          "Unknown";
+        layer.bindPopup(name);
 
-        layer.bindPopup(`
-          <b>Jurisdiction:</b> ${name}<br>
-          <b>Sales Tax:</b> ${rate}%
-        `);
-
-      }
-    },
-    'Sales tax'
-  );
-
-
-  // NG911
-  await loadGeoJson(
-    './static/NG911/ng911.geojson',
-    ng911Layer,
-    {
-      renderer: L.canvas(),
-
-      style: {
-        color: '#ff00aa',
-        weight: 4,
-        opacity: 1,
-        dashArray: '8,6',
-        fillColor: '#ff66cc',
-        fillOpacity: 0.04
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        const county =
-          feature.properties?.COUNTYNAME ||
-          feature.properties?.COUNTY ||
-          "Unknown";
-
-        layer.bindPopup(`
-          <b>NG911 County:</b> ${county}
-        `);
+        layer.bindTooltip(name, {
+          permanent: true,
+          direction: 'center',
+          className: 'school-label'
+        });
 
       }
     },
-    'NG911'
+    'Sales Tax'
   );
 
 
-  // WATER DISTRICTS
-  await loadGeoJson(
+  // WATER
+  await loadLayer(
     './static/Water/water.geojson',
     waterLayer,
     {
@@ -503,21 +423,24 @@ async function loadMap() {
       style: {
         color: '#006699',
         weight: 2,
-        opacity: 0.8,
+        opacity: 1,
         fillColor: '#66ccff',
-        fillOpacity: 0.08
+        fillOpacity: 0.15
       },
 
       onEachFeature: function(feature, layer) {
 
         const name =
           feature.properties?.PWSSNAME ||
-          feature.properties?.NAME ||
-          "Unknown";
+          "Water District";
 
-        layer.bindPopup(`
-          <b>Water District:</b> ${name}
-        `);
+        layer.bindPopup(name);
+
+        layer.bindTooltip(name, {
+          permanent: true,
+          direction: 'center',
+          className: 'school-label'
+        });
 
       }
     },
@@ -525,66 +448,6 @@ async function loadMap() {
   );
 
 }
-
-
-map.on('zoomend', function() {
-
-  if (!parcelGeoJsonLayer || !map.hasLayer(parcelsLayer)) {
-    return;
-  }
-
-  const zoom = map.getZoom();
-
-  if (zoom >= 18 && !parcelLabelsVisible) {
-
-    parcelLabelsVisible = true;
-
-    let visibleCount = 0;
-
-    parcelGeoJsonLayer.eachLayer(function(layer) {
-
-      if (visibleCount > 250) {
-        return;
-      }
-
-      if (!layer.getBounds || !map.getBounds().intersects(layer.getBounds())) {
-        return;
-      }
-
-      const parcelNum = layer.feature.properties?.parcel_num || "";
-
-      if (parcelNum) {
-
-        layer.bindTooltip(parcelNum, {
-          permanent: true,
-          direction: 'center',
-          className: 'parcel-label'
-        });
-
-        visibleCount++;
-
-      }
-
-    });
-
-  }
-
-  if (zoom < 18 && parcelLabelsVisible) {
-
-    parcelLabelsVisible = false;
-
-    parcelGeoJsonLayer.eachLayer(function(layer) {
-
-      if (layer.getTooltip()) {
-        layer.unbindTooltip();
-      }
-
-    });
-
-  }
-
-});
-
 
 loadMap();
 
