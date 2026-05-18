@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <title>Clinton County GIS</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -13,6 +14,7 @@
   <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 
   <style>
+
     html, body {
       margin: 0;
       padding: 0;
@@ -33,44 +35,59 @@
       overflow-y: auto;
     }
 
-    .city-label,
-    .township-label,
-    .school-label,
-    .water-label,
+    .city-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: #4b0082;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .township-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: #0033aa;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .school-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: #006600;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .water-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: #005f87;
+      font-size: 14px;
+      font-weight: bold;
+      text-shadow:
+        -1px -1px 0 #fff,
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff;
+    }
+
     .ambulance-label {
       background: transparent;
       border: none;
       box-shadow: none;
-      font-weight: bold;
-      white-space: nowrap;
-      text-align: center;
-    }
-
-    .city-label {
-      color: #4b0082;
-      font-size: 12px;
-    }
-
-    .township-label {
-      color: #0033aa;
-      font-size: 11px;
-    }
-
-    .school-label {
-      color: #006600;
-      font-size: 14px;
-    }
-
-    .water-label {
-      color: #005f87;
-      font-size: 14px;
-      text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
-    }
-
-    .ambulance-label {
       color: #990000;
       font-size: 14px;
-      text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+      font-weight: bold;
+      text-shadow:
+        -1px -1px 0 #fff,
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff;
     }
 
     .info-panel {
@@ -91,6 +108,7 @@
       font-size: 16px;
       margin-bottom: 6px;
     }
+
   </style>
 </head>
 
@@ -104,6 +122,7 @@
 <div id="map"></div>
 
 <script>
+
 const countyBounds = [
   [39.36, -94.82],
   [39.79, -94.10]
@@ -116,12 +135,6 @@ const map = L.map('map', {
 });
 
 map.setView([39.55, -94.45], 11);
-
-map.createPane('salesTaxPane');
-map.getPane('salesTaxPane').style.zIndex = 410;
-
-map.createPane('ambulancePane');
-map.getPane('ambulancePane').style.zIndex = 420;
 
 const osm = L.tileLayer(
   'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -166,65 +179,60 @@ L.control.layers(
 ).addTo(map);
 
 function escapeHtml(value) {
+
   return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-}
 
-function cleanNumber(value, fallback) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function firstProp(props, names, fallback) {
-  for (const name of names) {
-    if (props && props[name] !== undefined && props[name] !== null && props[name] !== "") {
-      return props[name];
-    }
-  }
-  return fallback;
 }
 
 function pointOnFeatureLatLng(feature) {
+
   try {
+
     const point = turf.pointOnFeature(feature);
+
     return [
       point.geometry.coordinates[1],
       point.geometry.coordinates[0]
     ];
+
   } catch (err) {
+
     return null;
+
   }
+
 }
 
-async function loadLayer(urls, target, options, label) {
-  const urlList = Array.isArray(urls) ? urls : [urls];
+async function loadLayer(url, target, options, label) {
 
-  for (const url of urlList) {
-    try {
-      const response = await fetch(url);
+  try {
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+    const response = await fetch(url);
 
-      const data = await response.json();
-      const geo = L.geoJSON(data, options);
-      geo.addTo(target);
-
-      console.log(label + " loaded from:", url);
-      return geo;
-
-    } catch (err) {
-      console.warn(label + " failed at " + url + ":", err);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
+
+    const data = await response.json();
+
+    const geo = L.geoJSON(data, options);
+
+    geo.addTo(target);
+
+    return geo;
+
+  } catch (err) {
+
+    console.error(label + " failed:", err);
+    return null;
+
   }
 
-  console.error(label + " failed: no working file path.");
-  return null;
 }
 
 async function loadMap() {
@@ -234,6 +242,7 @@ async function loadMap() {
     roadsLayer,
     {
       renderer: L.canvas(),
+
       style: {
         color: '#666666',
         weight: 0.7,
@@ -257,14 +266,17 @@ async function loadMap() {
           fillOpacity: 0.85
         }),
 
-      onEachFeature: function(feature, layer) {
-        const name = firstProp(feature.properties, ['NAME', 'name'], '');
-        if (name) {
-          layer.bindTooltip(escapeHtml(name), {
+      onEachFeature: (f, layer) => {
+
+        if (f.properties?.NAME) {
+
+          layer.bindTooltip(f.properties.NAME, {
             permanent: true,
             className: 'city-label'
           });
+
         }
+
       }
     },
     'Cities'
@@ -275,6 +287,7 @@ async function loadMap() {
     townshipsLayer,
     {
       renderer: L.canvas(),
+
       style: {
         color: '#0044ff',
         weight: 3,
@@ -284,13 +297,18 @@ async function loadMap() {
       },
 
       onEachFeature: function(feature, layer) {
-        const name = firstProp(feature.properties, ['NAME', 'NAMELSAD', 'name'], 'Township');
 
-        layer.bindTooltip(escapeHtml(name), {
+        const name =
+          feature.properties?.NAME ||
+          feature.properties?.NAMELSAD ||
+          "Township";
+
+        layer.bindTooltip(name, {
           permanent: true,
           direction: 'center',
           className: 'township-label'
         });
+
       }
     },
     'Townships'
@@ -301,6 +319,7 @@ async function loadMap() {
     floodLayer,
     {
       renderer: L.canvas(),
+
       style: {
         color: '#0088ff',
         weight: 1,
@@ -316,6 +335,7 @@ async function loadMap() {
     schoolLayer,
     {
       renderer: L.canvas(),
+
       style: {
         color: '#008800',
         weight: 3,
@@ -326,15 +346,19 @@ async function loadMap() {
       },
 
       onEachFeature: function(feature, layer) {
-        const name = firstProp(feature.properties, ['NAME', 'name'], '');
+
+        const name = feature.properties?.NAME || "";
 
         if (name) {
-          layer.bindTooltip(escapeHtml(name), {
+
+          layer.bindTooltip(name, {
             permanent: true,
             direction: 'center',
             className: 'school-label'
           });
+
         }
+
       }
     },
     'Schools'
@@ -345,6 +369,7 @@ async function loadMap() {
     waterLayer,
     {
       renderer: L.canvas(),
+
       style: {
         color: '#006699',
         weight: 2,
@@ -354,13 +379,15 @@ async function loadMap() {
       },
 
       onEachFeature: function(feature, layer) {
-        const name = firstProp(feature.properties, ['PWSSNAME', 'NAME', 'name'], 'Water District');
 
-        layer.bindPopup('<b>' + escapeHtml(name) + '</b>');
+        const name =
+          feature.properties?.PWSSNAME ||
+          "Water District";
 
         const labelLatLng = pointOnFeatureLatLng(feature);
 
         if (labelLatLng) {
+
           const label = L.marker(labelLatLng, {
             interactive: false,
             icon: L.divIcon({
@@ -371,7 +398,9 @@ async function loadMap() {
           });
 
           waterLayer.addLayer(label);
+
         }
+
       }
     },
     'Water'
@@ -381,47 +410,28 @@ async function loadMap() {
     './static/Ambulance/ambulance.geojson',
     ambulanceLayer,
     {
-      pane: 'ambulancePane',
-      renderer: L.canvas({ pane: 'ambulancePane' }),
+      renderer: L.canvas(),
 
-      style: function(feature) {
-        const name = firstProp(feature.properties, ['name', 'NAME'], '');
-
-        if (name === 'DEKALB/CLINTON') {
-          return { color: '#990000', weight: 2, fillColor: '#b7cff7', fillOpacity: 0.42 };
-        }
-
-        if (name === 'CENTRAL') {
-          return { color: '#990000', weight: 2, fillColor: '#fff4b8', fillOpacity: 0.50 };
-        }
-
-        if (name === 'EASTERN') {
-          return { color: '#990000', weight: 2, fillColor: '#dfb7f2', fillOpacity: 0.50 };
-        }
-
-        if (name === 'COUNTYWIDE') {
-          return { color: '#990000', weight: 2, fillColor: '#a9c8f5', fillOpacity: 0.42 };
-        }
-
-        if (name === 'SOUTHWEST') {
-          return { color: '#990000', weight: 2, fillColor: '#f4a6da', fillOpacity: 0.50 };
-        }
-
-        if (name === 'SOUTHERN') {
-          return { color: '#990000', weight: 2, fillColor: '#e2d2d2', fillOpacity: 0.50 };
-        }
-
-        return { color: '#990000', weight: 2, fillColor: '#cccccc', fillOpacity: 0.35 };
+      style: {
+        color: '#990000',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.35
       },
 
       onEachFeature: function(feature, layer) {
-        const name = firstProp(feature.properties, ['name', 'NAME'], 'Ambulance District');
 
-        layer.bindPopup('<b>' + escapeHtml(name) + '</b>');
+        const name =
+          feature.properties?.name ||
+          feature.properties?.NAME ||
+          "Ambulance District";
+
+        layer.bindPopup(name);
 
         const labelLatLng = pointOnFeatureLatLng(feature);
 
         if (labelLatLng) {
+
           const label = L.marker(labelLatLng, {
             interactive: false,
             icon: L.divIcon({
@@ -432,7 +442,9 @@ async function loadMap() {
           });
 
           ambulanceLayer.addLayer(label);
+
         }
+
       }
     },
     'Ambulance'
@@ -443,6 +455,7 @@ async function loadMap() {
     parcelsLayer,
     {
       renderer: L.canvas(),
+
       style: {
         color: '#555555',
         weight: 0.5,
@@ -451,69 +464,92 @@ async function loadMap() {
       },
 
       onEachFeature: function(feature, layer) {
+
         const props = feature.properties || {};
 
-        const owner = firstProp(props, ['owner', 'OWNER', 'deedholder', 'DEEDHOLDER'], 'Unknown');
-        const parcel = firstProp(props, ['parcel_num', 'PARCEL', 'PARCEL_NUM', 'parcel'], 'Unknown');
+        const owner =
+          props.owner ||
+          props.OWNER ||
+          props.deedholder ||
+          'Unknown';
+
+        const parcel =
+          props.parcel_num ||
+          props.PARCEL ||
+          'Unknown';
 
         layer.bindPopup(
           '<b>Parcel:</b> ' + escapeHtml(parcel) + '<br>' +
           '<b>Owner:</b> ' + escapeHtml(owner)
         );
+
       }
     },
     'Parcels'
   );
 
   await loadLayer(
-    [
-      './static/SalesTax/salestax.geojson',
-      './static/SalesTax/sales_tax.geojson',
-      './static/SalesTax/salesTax.geojson',
-      './static/SalesTax/sales-tax.geojson',
-      './static/salestax.geojson',
-      './static/sales_tax.geojson',
-      './static/salesTax.geojson',
-      './static/sales-tax.geojson'
-    ],
+    './static/SalesTax/salestax.geojson',
     salesTaxLayer,
     {
-      pane: 'salesTaxPane',
-      renderer: L.canvas({ pane: 'salesTaxPane' }),
+      renderer: L.canvas(),
 
       style: function(feature) {
-        const props = feature.properties || {};
 
-        const state = cleanNumber(firstProp(props, ['STATE_RATE', 'state_rate', 'STATE', 'state'], 4.225), 4.225);
-        const local = cleanNumber(firstProp(props, ['LOCAL_RATE', 'local_rate', 'LOCAL', 'local'], 0), 0);
-        const total = cleanNumber(firstProp(props, ['TOTAL_RATE', 'total_rate', 'TOTAL', 'total'], state + local), state + local);
+        const total =
+          Number(feature.properties?.TOTAL_RATE || 0);
 
         if (total >= 9) {
-          return { color: '#660000', fillColor: '#cc0000', weight: 2, fillOpacity: 0.45 };
+          return {
+            color: '#660000',
+            fillColor: '#cc0000',
+            weight: 2,
+            fillOpacity: 0.35
+          };
         }
 
         if (total >= 8) {
-          return { color: '#994400', fillColor: '#ff8800', weight: 2, fillOpacity: 0.40 };
+          return {
+            color: '#994400',
+            fillColor: '#ff8800',
+            weight: 2,
+            fillOpacity: 0.28
+          };
         }
 
-        return { color: '#666600', fillColor: '#ffff66', weight: 2, fillOpacity: 0.35 };
+        return {
+          color: '#666600',
+          fillColor: '#ffff66',
+          weight: 2,
+          fillOpacity: 0.22
+        };
+
       },
 
       onEachFeature: function(feature, layer) {
+
         const props = feature.properties || {};
 
-        const area = firstProp(props, ['NAME', 'name', 'AREA', 'area', 'CITY', 'city', 'JURISDICTION'], 'Sales Tax Area');
+        const city =
+          props.NAME ||
+          'Area';
 
-        const state = cleanNumber(firstProp(props, ['STATE_RATE', 'state_rate', 'STATE', 'state'], 4.225), 4.225);
-        const local = cleanNumber(firstProp(props, ['LOCAL_RATE', 'local_rate', 'LOCAL', 'local'], 0), 0);
-        const total = cleanNumber(firstProp(props, ['TOTAL_RATE', 'total_rate', 'TOTAL', 'total'], state + local), state + local);
+        const local =
+          Number(props.LOCAL_RATE || 0).toFixed(3);
+
+        const state =
+          Number(props.STATE_RATE || 4.225).toFixed(3);
+
+        const total =
+          Number(props.TOTAL_RATE || 0).toFixed(3);
 
         layer.bindPopup(
-          '<b>' + escapeHtml(area) + '</b><br>' +
-          'Missouri State: ' + state.toFixed(3) + '%<br>' +
-          'Local: ' + local.toFixed(3) + '%<br>' +
-          '<b>Total: ' + total.toFixed(3) + '%</b>'
+          '<b>' + escapeHtml(city) + '</b><br>' +
+          'Missouri State: ' + state + '%<br>' +
+          'Local: ' + local + '%<br>' +
+          '<b>Total: ' + total + '%</b>'
         );
+
       }
     },
     'Sales Tax'
