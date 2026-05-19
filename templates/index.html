@@ -188,7 +188,7 @@ const map = L.map('map', {
 
 
 // SLIGHTLY ZOOMED OUT
-map.setView([39.58, -94.50], 10.45);
+map.setView([39.58, -94.50], 10.60);
 
 
 const osm = L.tileLayer(
@@ -219,6 +219,7 @@ const salesTaxLayer = L.layerGroup();
 const waterLayer = L.layerGroup();
 
 let salesTaxFeatures = [];
+let salesTaxGeojson = null;
 
 
 // CHECKBOXES
@@ -565,10 +566,16 @@ async function loadMap() {
 
   // SALES TAX
 
-  // clear stale references before reload
+  // reset references before reload
   salesTaxFeatures = [];
 
-  // close popup automatically if layer hidden
+  // remove old geojson layer if present
+  if (salesTaxGeojson) {
+    salesTaxLayer.removeLayer(salesTaxGeojson);
+    salesTaxGeojson = null;
+  }
+
+  // close popup when layer hidden
   map.off('overlayremove');
 
   map.on('overlayremove', function(e) {
@@ -579,7 +586,7 @@ async function loadMap() {
 
   });
 
-  await loadLayer(
+  salesTaxGeojson = await loadLayer(
     './static/Sales_tax/sales_tax.geojson',
     salesTaxLayer,
     {
@@ -595,7 +602,8 @@ async function loadMap() {
 
       onEachFeature: function(feature, layer) {
 
-        salesTaxFeatures.push(layer);
+        // store FEATURE instead of layer reference
+        salesTaxFeatures.push(feature);
 
         layer.off('click');
 
@@ -603,22 +611,19 @@ async function loadMap() {
 
           const matches = [];
 
-          salesTaxFeatures.forEach(function(testLayer) {
+          salesTaxFeatures.forEach(function(featureObj) {
 
             try {
 
-              // skip stale layers
               if (
-                testLayer &&
-                testLayer._map &&
-                testLayer.feature &&
+                featureObj &&
                 turf.booleanPointInPolygon(
                   turf.point([e.latlng.lng, e.latlng.lat]),
-                  testLayer.feature
+                  featureObj
                 )
               ) {
 
-                matches.push(testLayer.feature);
+                matches.push(featureObj);
 
               }
 
