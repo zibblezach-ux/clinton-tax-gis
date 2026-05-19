@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -70,6 +71,25 @@
       box-shadow: none;
       color: #005f87;
       font-size: 14px;
+      font-weight: bold;
+      white-space: nowrap;
+      text-align: center;
+      width: auto !important;
+      height: auto !important;
+      line-height: 1.2;
+      text-shadow:
+        -1px -1px 0 #fff,
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff;
+    }
+
+    .fire-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: #cc0000;
+      font-size: 13px;
       font-weight: bold;
       white-space: nowrap;
       text-align: center;
@@ -188,6 +208,7 @@ const townshipsLayer = L.layerGroup();
 const floodLayer = L.layerGroup();
 const schoolLayer = L.layerGroup();
 const parcelsLayer = L.layerGroup();
+const fireLayer = L.layerGroup();
 
 const salesTaxLayer = L.layerGroup();
 const waterLayer = L.layerGroup();
@@ -204,7 +225,8 @@ const overlays = {
   "School Districts": schoolLayer,
   "Parcels": parcelsLayer,
   "Sales Tax": salesTaxLayer,
-  "Water Districts": waterLayer
+  "Water Districts": waterLayer,
+  "Fire Districts": fireLayer
 };
 
 L.control.layers(
@@ -636,6 +658,56 @@ async function loadMap() {
     'Water'
   );
 
+
+  // FIRE DISTRICTS
+  await loadLayer(
+    './static/Fire/fire_district_boundaries.geojson',
+    fireLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#cc0000',
+        weight: 3,
+        opacity: 1,
+        dashArray: '6,4',
+        fillColor: '#ff6666',
+        fillOpacity: 0.06
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const name =
+          feature.properties?.NAME ||
+          feature.properties?.DISTRICT ||
+          feature.properties?.FIRE_DIST ||
+          feature.properties?.LABEL ||
+          'Fire District';
+
+        const labelLatLng = pointOnFeatureLatLng(feature);
+
+        if (labelLatLng) {
+
+          const label = L.marker(labelLatLng, {
+            interactive: false,
+            icon: L.divIcon({
+              className: 'fire-label',
+              html: escapeHtml(name),
+              iconSize: null
+            })
+          });
+
+          fireLayer.addLayer(label);
+
+        }
+
+        layer.bindPopup(`<b>${escapeHtml(name)}</b>`);
+
+      }
+    },
+    'Fire Districts'
+  );
+
 }
 
 loadMap();
@@ -644,3 +716,6 @@ loadMap();
 
 </body>
 </html>
+```
+
+Your app.py file does not need any changes.
