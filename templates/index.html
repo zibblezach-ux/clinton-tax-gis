@@ -624,8 +624,7 @@ async function loadMap() {
         color: '#006699',
         weight: 2,
         opacity: 1,
-        fillColor: '#66ccff',
-        fillOpacity: 0.15
+        fillOpacity: 0
       },
 
       onEachFeature: function(feature, layer) {
@@ -638,7 +637,17 @@ async function loadMap() {
 
         if (labelLatLng) {
 
-          const label = L.marker(labelLatLng, {
+          let adjustedLatLng = labelLatLng;
+
+          // Better centering for DeKalb label
+          if (name.includes("DeKalb")) {
+            adjustedLatLng = [
+              labelLatLng[0] + 0.01,
+              labelLatLng[1] + 0.02
+            ];
+          }
+
+          const label = L.marker(adjustedLatLng, {
             interactive: false,
             icon: L.divIcon({
               className: 'water-label',
