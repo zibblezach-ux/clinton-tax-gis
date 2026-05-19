@@ -206,6 +206,24 @@ L.Control.geocoder({
 }).addTo(map);
 
 
+// KEEP SALES TAX LAYER CLICKABLE ABOVE OTHER OVERLAYS
+map.on('overlayadd', function(e) {
+
+  if (salesTaxLayer && map.hasLayer(salesTaxLayer)) {
+
+    salesTaxLayer.eachLayer(function(layer) {
+
+      if (layer.bringToFront) {
+        layer.bringToFront();
+      }
+
+    });
+
+  }
+
+});
+
+
 // LAYER GROUPS
 const roadsLayer = L.layerGroup().addTo(map);
 const citiesLayer = L.layerGroup();
