@@ -130,32 +130,6 @@
       font-size: 16px;
       margin-bottom: 6px;
     }
-
-    .tax-popup table {
-      border-collapse: collapse;
-      width: 100%;
-      font-size: 13px;
-    }
-
-    .tax-popup th,
-    .tax-popup td {
-      border-bottom: 1px solid #ddd;
-      padding: 3px 5px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    .tax-popup th {
-      font-weight: bold;
-      background: #f5f5f5;
-    }
-
-    .tax-total {
-      margin-top: 10px;
-      padding-top: 8px;
-      border-top: 2px solid #ccc;
-      font-size: 14px;
-    }
   </style>
 </head>
 
@@ -169,8 +143,6 @@
 <div id="map"></div>
 
 <script>
-
-const MISSOURI_STATE_RATE = 4.225;
 
 const countyBounds = [
   [39.30, -94.84],
@@ -208,11 +180,8 @@ const floodLayer = L.layerGroup();
 const schoolLayer = L.layerGroup();
 const parcelsLayer = L.layerGroup();
 const fireLayer = L.layerGroup();
-
 const salesTaxLayer = L.layerGroup();
 const waterLayer = L.layerGroup();
-
-let salesTaxFeatures = [];
 
 
 // CHECKBOXES
@@ -240,8 +209,6 @@ async function loadLayer(url, target, options, label) {
 
   try {
 
-    console.log("Loading:", url);
-
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -249,8 +216,6 @@ async function loadLayer(url, target, options, label) {
     }
 
     const data = await response.json();
-
-    console.log(label, "loaded");
 
     const geo = L.geoJSON(data, options);
 
@@ -297,100 +262,6 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 
-}
-
-
-function formatRate(value) {
-
-  if (value === null || value === undefined || value === "") {
-    return "0";
-  }
-
-  const number = Number(value);
-
-  if (Number.isNaN(number)) {
-    return escapeHtml(value);
-  }
-
-  return number.toFixed(3);
-
-}
-
-
-function salesTaxPopupHtml(matches) {
-
-  if (!matches.length) {
-    return "<b>No sales tax polygon found at this point.</b>";
-  }
-
-  const rows = matches.map(feature => {
-
-    const p = feature.properties || {};
-
-    const name = escapeHtml(p.JURISDICTION_NAME || "Unnamed");
-    const type = escapeHtml(p.JURISDICTION_TYPE || "");
-    const sales = Number(p.SALES_TAX || 0);
-
-    return `
-      <tr>
-        <td>${name}</td>
-        <td>${type}</td>
-        <td>${formatRate(sales)}%</td>
-      </tr>
-    `;
-
-  }).join("");
-
-  const localTotal = matches.reduce((sum, feature) => {
-
-    const value = Number(feature.properties?.SALES_TAX || 0);
-
-    return sum + (Number.isNaN(value) ? 0 : value);
-
-  }, 0);
-
-  const combinedTotal = MISSOURI_STATE_RATE + localTotal;
-
-  return `
-    <div class="tax-popup">
-
-      <b>Sales tax jurisdictions at this point</b>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Jurisdiction</th>
-            <th>Type</th>
-            <th>Rate</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          <tr>
-            <td>Missouri State</td>
-            <td>STATE</td>
-            <td>${formatRate(MISSOURI_STATE_RATE)}%</td>
-          </tr>
-
-          ${rows}
-
-        </tbody>
-      </table>
-
-      <div class="tax-total">
-        <b>Missouri State:</b>
-        ${formatRate(MISSOURI_STATE_RATE)}%<br>
-
-        <b>Local Add-ons:</b>
-        ${formatRate(localTotal)}%<br>
-
-        <b>Combined Total:</b>
-        ${formatRate(combinedTotal)}%
-      </div>
-
-    </div>
-  `;
 }
 
 
@@ -557,62 +428,6 @@ async function loadMap() {
   );
 
 
-  // SALES TAX
-  await loadLayer(
-    './static/Sales_tax/sales_tax.geojson',
-    salesTaxLayer,
-    {
-      renderer: L.canvas(),
-
-      style: {
-        color: '#ff8800',
-        weight: 2,
-        opacity: 1,
-        fillColor: '#ffaa33',
-        fillOpacity: 0.08
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        salesTaxFeatures.push(layer);
-
-        layer.on('click', function(e) {
-
-          const matches = [];
-
-          salesTaxFeatures.forEach(function(testLayer) {
-
-            try {
-
-              if (
-                testLayer.feature &&
-                turf.booleanPointInPolygon(
-                  turf.point([e.latlng.lng, e.latlng.lat]),
-                  testLayer.feature
-                )
-              ) {
-
-                matches.push(testLayer.feature);
-
-              }
-
-            } catch(err) {}
-
-          });
-
-          L.popup()
-            .setLatLng(e.latlng)
-            .setContent(salesTaxPopupHtml(matches))
-            .openOn(map);
-
-        });
-
-      }
-    },
-    'Sales Tax'
-  );
-
-
   // WATER
   await loadLayer(
     './static/Water/water.geojson',
@@ -639,12 +454,14 @@ async function loadMap() {
 
           let adjustedLatLng = labelLatLng;
 
-          // Better centering for DeKalb label
+          // HARD RECENTER FOR DEKALB LABEL
           if (name.includes("DeKalb")) {
+
             adjustedLatLng = [
-              labelLatLng[0] + 0.01,
-              labelLatLng[1] + 0.02
+              39.615,
+              -94.515
             ];
+
           }
 
           const label = L.marker(adjustedLatLng, {
