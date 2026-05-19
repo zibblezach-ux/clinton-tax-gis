@@ -330,7 +330,28 @@ function salesTaxPopupHtml(matches) {
     return "<b>No sales tax polygon found at this point.</b>";
   }
 
-  const rows = matches.map(feature => {
+  // REMOVE DUPLICATE JURISDICTIONS
+  const uniqueMatches = [];
+  const seen = new Set();
+
+  matches.forEach(feature => {
+
+    const p = feature.properties || {};
+
+    const key = [
+      p.JURISDICTION_NAME || "",
+      p.JURISDICTION_TYPE || "",
+      p.SALES_TAX || ""
+    ].join("|");
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueMatches.push(feature);
+    }
+
+  });
+
+  const rows = uniqueMatches.map(feature => {
 
     const p = feature.properties || {};
 
@@ -348,7 +369,7 @@ function salesTaxPopupHtml(matches) {
 
   }).join("");
 
-  const localTotal = matches.reduce((sum, feature) => {
+  const localTotal = uniqueMatches.reduce((sum, feature) => {
 
     const value = Number(feature.properties?.SALES_TAX || 0);
 
