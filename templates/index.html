@@ -130,6 +130,32 @@
       font-size: 16px;
       margin-bottom: 6px;
     }
+
+    .tax-popup table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+    }
+
+    .tax-popup th,
+    .tax-popup td {
+      border-bottom: 1px solid #ddd;
+      padding: 3px 5px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .tax-popup th {
+      font-weight: bold;
+      background: #f5f5f5;
+    }
+
+    .tax-total {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 2px solid #ccc;
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -143,6 +169,8 @@
 <div id="map"></div>
 
 <script>
+
+const MISSOURI_STATE_RATE = 4.225;
 
 const countyBounds = [
   [39.30, -94.84],
@@ -180,8 +208,11 @@ const floodLayer = L.layerGroup();
 const schoolLayer = L.layerGroup();
 const parcelsLayer = L.layerGroup();
 const fireLayer = L.layerGroup();
+
 const salesTaxLayer = L.layerGroup();
 const waterLayer = L.layerGroup();
+
+let salesTaxFeatures = [];
 
 
 // CHECKBOXES
@@ -209,6 +240,8 @@ async function loadLayer(url, target, options, label) {
 
   try {
 
+    console.log("Loading:", url);
+
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -216,6 +249,8 @@ async function loadLayer(url, target, options, label) {
     }
 
     const data = await response.json();
+
+    console.log(label, "loaded");
 
     const geo = L.geoJSON(data, options);
 
@@ -265,168 +300,100 @@ function escapeHtml(value) {
 }
 
 
+function formatRate(value) {
+
+  if (value === null || value === undefined || value === "") {
+    return "0";
+  }
+
+  const number = Number(value);
+
+  if (Number.isNaN(number)) {
+    return escapeHtml(value);
+  }
+
+  return number.toFixed(3);
+
+}
+
+
+function salesTaxPopupHtml(matches) {
+
+  if (!matches.length) {
+    return "<b>No sales tax polygon found at this point.</b>";
+  }
+
+  const rows = matches.map(feature => {
+
+    const p = feature.properties || {};
+
+    const name = escapeHtml(p.JURISDICTION_NAME || "Unnamed");
+    const type = escapeHtml(p.JURISDICTION_TYPE || "");
+    const sales = Number(p.SALES_TAX || 0);
+
+    return `
+      <tr>
+        <td>${name}</td>
+        <td>${type}</td>
+        <td>${formatRate(sales)}%</td>
+      </tr>
+    `;
+
+  }).join("");
+
+  const localTotal = matches.reduce((sum, feature) => {
+
+    const value = Number(feature.properties?.SALES_TAX || 0);
+
+    return sum + (Number.isNaN(value) ? 0 : value);
+
+  }, 0);
+
+  const combinedTotal = MISSOURI_STATE_RATE + localTotal;
+
+  return `
+    <div class="tax-popup">
+
+      <b>Sales tax jurisdictions at this point</b>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Jurisdiction</th>
+            <th>Type</th>
+            <th>Rate</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr>
+            <td>Missouri State</td>
+            <td>STATE</td>
+            <td>${formatRate(MISSOURI_STATE_RATE)}%</td>
+          </tr>
+
+          ${rows}
+
+        </tbody>
+      </table>
+
+      <div class="tax-total">
+        <b>Missouri State:</b>
+        ${formatRate(MISSOURI_STATE_RATE)}%<br>
+
+        <b>Local Add-ons:</b>
+        ${formatRate(localTotal)}%<br>
+
+        <b>Combined Total:</b>
+        ${formatRate(combinedTotal)}%
+      </div>
+
+    </div>
+  `;
+}
+
 async function loadMap() {
-
-  // ROADS
-  await loadLayer(
-    './static/Roads/roads.geojson',
-    roadsLayer,
-    {
-      renderer: L.canvas(),
-
-      style: {
-        color: '#666666',
-        weight: 0.7,
-        opacity: 0.35,
-        dashArray: '3,3'
-      }
-    },
-    'Roads'
-  );
-
-
-  // CITIES
-  await loadLayer(
-    './static/Cities/cities.geojson',
-    citiesLayer,
-    {
-      pointToLayer: (f, latlng) =>
-        L.circleMarker(latlng, {
-          radius: 5,
-          fillColor: '#7a00cc',
-          color: '#000',
-          weight: 1,
-          fillOpacity: 0.85
-        }),
-
-      onEachFeature: (f, layer) => {
-
-        if (f.properties?.NAME) {
-
-          layer.bindTooltip(f.properties.NAME, {
-            permanent: true,
-            className: 'city-label'
-          });
-
-        }
-
-      }
-    },
-    'Cities'
-  );
-
-
-  // TOWNSHIPS
-  await loadLayer(
-    './static/Townships/townships.geojson',
-    townshipsLayer,
-    {
-      renderer: L.canvas(),
-
-      style: {
-        color: '#0044ff',
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 0
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        const name =
-          feature.properties?.NAME ||
-          feature.properties?.NAMELSAD ||
-          "Township";
-
-        layer.bindTooltip(name, {
-          permanent: true,
-          direction: 'center',
-          className: 'township-label'
-        });
-
-      }
-    },
-    'Townships'
-  );
-
-
-  // FLOOD
-  await loadLayer(
-    './static/Floodzones/floodzones.geojson',
-    floodLayer,
-    {
-      renderer: L.canvas(),
-
-      style: {
-        color: '#0088ff',
-        weight: 1,
-        opacity: 0.7,
-        fillOpacity: 0
-      }
-    },
-    'Flood'
-  );
-
-
-  // SCHOOLS
-  await loadLayer(
-    './static/school_districts/school_districts.geojson',
-    schoolLayer,
-    {
-      renderer: L.canvas(),
-
-      style: {
-        color: '#008800',
-        weight: 3,
-        opacity: 0.9,
-        dashArray: '8,4',
-        fillColor: '#b7e3b7',
-        fillOpacity: 0.04
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        const name = feature.properties?.NAME || "";
-
-        if (name) {
-
-          let tooltipOptions = {
-            permanent: true,
-            direction: 'center',
-            className: 'school-label'
-          };
-
-          if (name.includes("Osborn")) {
-            tooltipOptions.offset = [55, 14];
-          }
-
-          layer.bindTooltip(name, tooltipOptions);
-
-        }
-
-      }
-    },
-    'Schools'
-  );
-
-
-  // PARCELS
-  await loadLayer(
-    './static/Parcels/parcels.geojson',
-    parcelsLayer,
-    {
-      renderer: L.canvas(),
-
-      style: {
-        color: '#444444',
-        weight: 0.35,
-        opacity: 0.45,
-        fillColor: '#cccccc',
-        fillOpacity: 0.02
-      }
-    },
-    'Parcels'
-  );
-
 
   // WATER
   await loadLayer(
@@ -454,12 +421,12 @@ async function loadMap() {
 
           let adjustedLatLng = labelLatLng;
 
-          // HARD RECENTER FOR DEKALB LABEL
+          // slight adjustment for DeKalb label
           if (name.includes("DeKalb")) {
 
             adjustedLatLng = [
-              39.615,
-              -94.515
+              labelLatLng[0] + 0.006,
+              labelLatLng[1] + 0.012
             ];
 
           }
@@ -480,65 +447,6 @@ async function loadMap() {
       }
     },
     'Water'
-  );
-
-
-  // FIRE DISTRICTS
-  await loadLayer(
-    './static/Fire/fire_district_boundaries.geojson',
-    fireLayer,
-    {
-      renderer: L.canvas(),
-
-      style: {
-        color: '#cc0000',
-        weight: 3,
-        opacity: 1,
-        dashArray: '6,4',
-        fillOpacity: 0
-      },
-
-      onEachFeature: function(feature, layer) {
-
-        const props = feature.properties || {};
-
-        const name =
-          props.NAME ||
-          props.name ||
-          props.DISTRICT ||
-          props.district ||
-          props.FIRE_DIST ||
-          props.fire_dist ||
-          props.LABEL ||
-          props.label ||
-          props.FDNAME ||
-          props.fdname ||
-          props.AGENCY ||
-          props.agency ||
-          "Unnamed Fire District";
-
-        const labelLatLng = pointOnFeatureLatLng(feature);
-
-        if (labelLatLng) {
-
-          const label = L.marker(labelLatLng, {
-            interactive: false,
-            icon: L.divIcon({
-              className: 'fire-label',
-              html: escapeHtml(name),
-              iconSize: null
-            })
-          });
-
-          fireLayer.addLayer(label);
-
-        }
-
-        layer.bindPopup(`<b>${escapeHtml(name)}</b>`);
-
-      }
-    },
-    'Fire Districts'
   );
 
 }
