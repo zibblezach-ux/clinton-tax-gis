@@ -188,7 +188,7 @@ const map = L.map('map', {
 
 
 // SLIGHTLY ZOOMED OUT
-map.setView([39.58, -94.50], 10.60);
+map.setView([39.58, -94.50], 10.75);
 
 
 const osm = L.tileLayer(
@@ -566,16 +566,10 @@ async function loadMap() {
 
   // SALES TAX
 
-  // reset references before reload
+  // reset feature cache before reload
   salesTaxFeatures = [];
 
-  // remove old geojson layer if present
-  if (salesTaxGeojson) {
-    salesTaxLayer.removeLayer(salesTaxGeojson);
-    salesTaxGeojson = null;
-  }
-
-  // close popup when layer hidden
+  // close popup automatically when layer hidden
   map.off('overlayremove');
 
   map.on('overlayremove', function(e) {
@@ -586,7 +580,7 @@ async function loadMap() {
 
   });
 
-  salesTaxGeojson = await loadLayer(
+  await loadLayer(
     './static/Sales_tax/sales_tax.geojson',
     salesTaxLayer,
     {
@@ -602,23 +596,28 @@ async function loadMap() {
 
       onEachFeature: function(feature, layer) {
 
-        // store FEATURE instead of layer reference
+        // cache pure feature objects only
         salesTaxFeatures.push(feature);
 
         layer.off('click');
 
         layer.on('click', function(e) {
 
+          const clickPoint = turf.point([
+            e.latlng.lng,
+            e.latlng.lat
+          ]);
+
           const matches = [];
 
-          salesTaxFeatures.forEach(function(featureObj) {
+          for (const featureObj of salesTaxFeatures) {
 
             try {
 
               if (
                 featureObj &&
                 turf.booleanPointInPolygon(
-                  turf.point([e.latlng.lng, e.latlng.lat]),
+                  clickPoint,
                   featureObj
                 )
               ) {
@@ -629,18 +628,14 @@ async function loadMap() {
 
             } catch(err) {}
 
-          });
+          }
 
           map.closePopup();
 
-          if (matches.length) {
-
-            L.popup()
-              .setLatLng(e.latlng)
-              .setContent(salesTaxPopupHtml(matches))
-              .openOn(map);
-
-          }
+          L.popup()
+            .setLatLng(e.latlng)
+            .setContent(salesTaxPopupHtml(matches))
+            .openOn(map);
 
         });
 
