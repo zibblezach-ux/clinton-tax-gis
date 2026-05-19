@@ -582,6 +582,8 @@ async function loadMap() {
 
         salesTaxFeatures.push(layer);
 
+        layer.off('click');
+
         layer.on('click', function(e) {
 
           const matches = [];
