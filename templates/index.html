@@ -173,8 +173,8 @@
 const MISSOURI_STATE_RATE = 4.225;
 
 const countyBounds = [
-  [39.36, -94.82],
-  [39.79, -94.10]
+  [39.30, -94.84],
+  [39.82, -94.05]
 ];
 
 const map = L.map('map', {
@@ -183,7 +183,7 @@ const map = L.map('map', {
   preferCanvas: true
 });
 
-map.setView([39.55, -94.45], 11);
+map.setView([39.58, -94.50], 10.7);
 
 const osm = L.tileLayer(
   'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
