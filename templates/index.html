@@ -188,7 +188,7 @@ const map = L.map('map', {
 
 
 // SLIGHTLY ZOOMED OUT
-map.setView([39.58, -94.50], 10.25);
+map.setView([39.58, -94.50], 10.45);
 
 
 const osm = L.tileLayer(
@@ -569,6 +569,8 @@ async function loadMap() {
   salesTaxFeatures = [];
 
   // close popup automatically if layer hidden
+  map.off('overlayremove');
+
   map.on('overlayremove', function(e) {
 
     if (e.layer === salesTaxLayer) {
@@ -605,9 +607,10 @@ async function loadMap() {
 
             try {
 
-              // ignore removed/stale layers
+              // skip stale layers
               if (
-                map.hasLayer(testLayer) &&
+                testLayer &&
+                testLayer._map &&
                 testLayer.feature &&
                 turf.booleanPointInPolygon(
                   turf.point([e.latlng.lng, e.latlng.lat]),
@@ -623,13 +626,16 @@ async function loadMap() {
 
           });
 
-          // clear prior popup first
           map.closePopup();
 
-          L.popup()
-            .setLatLng(e.latlng)
-            .setContent(salesTaxPopupHtml(matches))
-            .openOn(map);
+          if (matches.length) {
+
+            L.popup()
+              .setLatLng(e.latlng)
+              .setContent(salesTaxPopupHtml(matches))
+              .openOn(map);
+
+          }
 
         });
 
