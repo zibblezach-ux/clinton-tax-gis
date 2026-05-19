@@ -564,7 +564,18 @@ async function loadMap() {
 
 
   // SALES TAX
+
+  // clear stale references before reload
   salesTaxFeatures = [];
+
+  // close popup automatically if layer hidden
+  map.on('overlayremove', function(e) {
+
+    if (e.layer === salesTaxLayer) {
+      map.closePopup();
+    }
+
+  });
 
   await loadLayer(
     './static/Sales_tax/sales_tax.geojson',
@@ -584,6 +595,8 @@ async function loadMap() {
 
         salesTaxFeatures.push(layer);
 
+        layer.off('click');
+
         layer.on('click', function(e) {
 
           const matches = [];
@@ -592,7 +605,9 @@ async function loadMap() {
 
             try {
 
+              // ignore removed/stale layers
               if (
+                map.hasLayer(testLayer) &&
                 testLayer.feature &&
                 turf.booleanPointInPolygon(
                   turf.point([e.latlng.lng, e.latlng.lat]),
@@ -607,6 +622,9 @@ async function loadMap() {
             } catch(err) {}
 
           });
+
+          // clear prior popup first
+          map.closePopup();
 
           L.popup()
             .setLatLng(e.latlng)
