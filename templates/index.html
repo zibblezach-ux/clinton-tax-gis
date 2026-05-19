@@ -206,23 +206,6 @@ L.Control.geocoder({
 }).addTo(map);
 
 
-// KEEP SALES TAX LAYER CLICKABLE ABOVE OTHER OVERLAYS
-map.on('overlayadd', function(e) {
-
-  if (salesTaxLayer && map.hasLayer(salesTaxLayer)) {
-
-    salesTaxLayer.eachLayer(function(layer) {
-
-      if (layer.bringToFront) {
-        layer.bringToFront();
-      }
-
-    });
-
-  }
-
-});
-
 
 // LAYER GROUPS
 const roadsLayer = L.layerGroup().addTo(map);
@@ -440,6 +423,50 @@ function salesTaxPopupHtml(matches) {
 }
 
 
+
+function handleSalesTaxMapClick(e) {
+
+  if (!map.hasLayer(salesTaxLayer)) {
+    return;
+  }
+
+  const clickPoint = turf.point([
+    e.latlng.lng,
+    e.latlng.lat
+  ]);
+
+  const matches = [];
+
+  for (const featureObj of salesTaxFeatures) {
+
+    try {
+
+      if (
+        featureObj &&
+        turf.booleanPointInPolygon(
+          clickPoint,
+          featureObj
+        )
+      ) {
+
+        matches.push(featureObj);
+
+      }
+
+    } catch(err) {}
+
+  }
+
+  map.closePopup();
+
+  L.popup()
+    .setLatLng(e.latlng)
+    .setContent(salesTaxPopupHtml(matches))
+    .openOn(map);
+
+}
+
+
 async function loadMap() {
 
   // ROADS
@@ -609,8 +636,6 @@ async function loadMap() {
   salesTaxFeatures = [];
 
   // close popup automatically when layer hidden
-  map.off('overlayremove');
-
   map.on('overlayremove', function(e) {
 
     if (e.layer === salesTaxLayer) {
@@ -618,6 +643,10 @@ async function loadMap() {
     }
 
   });
+
+  // use map-level click handling so other active overlay layers cannot break sales tax popups
+  map.off('click', handleSalesTaxMapClick);
+  map.on('click', handleSalesTaxMapClick);
 
   await loadLayer(
     './static/Sales_tax/sales_tax.geojson',
@@ -637,46 +666,6 @@ async function loadMap() {
 
         // cache pure feature objects only
         salesTaxFeatures.push(feature);
-
-        layer.off('click');
-
-        layer.on('click', function(e) {
-
-          const clickPoint = turf.point([
-            e.latlng.lng,
-            e.latlng.lat
-          ]);
-
-          const matches = [];
-
-          for (const featureObj of salesTaxFeatures) {
-
-            try {
-
-              if (
-                featureObj &&
-                turf.booleanPointInPolygon(
-                  clickPoint,
-                  featureObj
-                )
-              ) {
-
-                matches.push(featureObj);
-
-              }
-
-            } catch(err) {}
-
-          }
-
-          map.closePopup();
-
-          L.popup()
-            .setLatLng(e.latlng)
-            .setContent(salesTaxPopupHtml(matches))
-            .openOn(map);
-
-        });
 
       }
     },
