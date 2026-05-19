@@ -564,6 +564,8 @@ async function loadMap() {
 
 
   // SALES TAX
+  salesTaxFeatures = [];
+
   await loadLayer(
     './static/Sales_tax/sales_tax.geojson',
     salesTaxLayer,
@@ -581,8 +583,6 @@ async function loadMap() {
       onEachFeature: function(feature, layer) {
 
         salesTaxFeatures.push(layer);
-
-        layer.off('click');
 
         layer.on('click', function(e) {
 
