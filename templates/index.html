@@ -396,6 +396,223 @@ function salesTaxPopupHtml(matches) {
 
 async function loadMap() {
 
+  // ROADS
+  await loadLayer(
+    './static/Roads/roads.geojson',
+    roadsLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#666666',
+        weight: 0.7,
+        opacity: 0.35,
+        dashArray: '3,3'
+      }
+    },
+    'Roads'
+  );
+
+
+  // CITIES
+  await loadLayer(
+    './static/Cities/cities.geojson',
+    citiesLayer,
+    {
+      pointToLayer: (f, latlng) =>
+        L.circleMarker(latlng, {
+          radius: 5,
+          fillColor: '#7a00cc',
+          color: '#000',
+          weight: 1,
+          fillOpacity: 0.85
+        }),
+
+      onEachFeature: (f, layer) => {
+
+        if (f.properties?.NAME) {
+
+          layer.bindTooltip(f.properties.NAME, {
+            permanent: true,
+            className: 'city-label'
+          });
+
+        }
+
+      }
+    },
+    'Cities'
+  );
+
+
+  // TOWNSHIPS
+  await loadLayer(
+    './static/Townships/townships.geojson',
+    townshipsLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#0044ff',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const name =
+          feature.properties?.NAME ||
+          feature.properties?.NAMELSAD ||
+          "Township";
+
+        layer.bindTooltip(name, {
+          permanent: true,
+          direction: 'center',
+          className: 'township-label'
+        });
+
+      }
+    },
+    'Townships'
+  );
+
+
+  // FLOOD
+  await loadLayer(
+    './static/Floodzones/floodzones.geojson',
+    floodLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#0088ff',
+        weight: 1,
+        opacity: 0.7,
+        fillOpacity: 0
+      }
+    },
+    'Flood'
+  );
+
+
+  // SCHOOLS
+  await loadLayer(
+    './static/school_districts/school_districts.geojson',
+    schoolLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#008800',
+        weight: 3,
+        opacity: 0.9,
+        dashArray: '8,4',
+        fillColor: '#b7e3b7',
+        fillOpacity: 0.04
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const name = feature.properties?.NAME || "";
+
+        if (name) {
+
+          let tooltipOptions = {
+            permanent: true,
+            direction: 'center',
+            className: 'school-label'
+          };
+
+          if (name.includes("Osborn")) {
+            tooltipOptions.offset = [55, 14];
+          }
+
+          layer.bindTooltip(name, tooltipOptions);
+
+        }
+
+      }
+    },
+    'Schools'
+  );
+
+
+  // PARCELS
+  await loadLayer(
+    './static/Parcels/parcels.geojson',
+    parcelsLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#444444',
+        weight: 0.35,
+        opacity: 0.45,
+        fillColor: '#cccccc',
+        fillOpacity: 0.02
+      }
+    },
+    'Parcels'
+  );
+
+
+  // SALES TAX
+  await loadLayer(
+    './static/Sales_tax/sales_tax.geojson',
+    salesTaxLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#ff8800',
+        weight: 2,
+        opacity: 1,
+        fillColor: '#ffaa33',
+        fillOpacity: 0.08
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        salesTaxFeatures.push(layer);
+
+        layer.on('click', function(e) {
+
+          const matches = [];
+
+          salesTaxFeatures.forEach(function(testLayer) {
+
+            try {
+
+              if (
+                testLayer.feature &&
+                turf.booleanPointInPolygon(
+                  turf.point([e.latlng.lng, e.latlng.lat]),
+                  testLayer.feature
+                )
+              ) {
+
+                matches.push(testLayer.feature);
+
+              }
+
+            } catch(err) {}
+
+          });
+
+          L.popup()
+            .setLatLng(e.latlng)
+            .setContent(salesTaxPopupHtml(matches))
+            .openOn(map);
+
+        });
+
+      }
+    },
+    'Sales Tax'
+  );
+
+
   // WATER
   await loadLayer(
     './static/Water/water.geojson',
@@ -425,8 +642,8 @@ async function loadMap() {
           // RECENTER DEKALB LABEL
           if (name.includes("DeKalb")) {
             adjustedLatLng = [
-              labelLatLng[0] + 0.004,
-              labelLatLng[1] - 0.012
+              labelLatLng[0] - 0.004,
+              labelLatLng[1] - 0.006
             ];
           }
 
@@ -446,6 +663,65 @@ async function loadMap() {
       }
     },
     'Water'
+  );
+
+
+  // FIRE DISTRICTS
+  await loadLayer(
+    './static/Fire/fire_district_boundaries.geojson',
+    fireLayer,
+    {
+      renderer: L.canvas(),
+
+      style: {
+        color: '#cc0000',
+        weight: 3,
+        opacity: 1,
+        dashArray: '6,4',
+        fillOpacity: 0
+      },
+
+      onEachFeature: function(feature, layer) {
+
+        const props = feature.properties || {};
+
+        const name =
+          props.NAME ||
+          props.name ||
+          props.DISTRICT ||
+          props.district ||
+          props.FIRE_DIST ||
+          props.fire_dist ||
+          props.LABEL ||
+          props.label ||
+          props.FDNAME ||
+          props.fdname ||
+          props.AGENCY ||
+          props.agency ||
+          "Unnamed Fire District";
+
+        const labelLatLng = pointOnFeatureLatLng(feature);
+
+        if (labelLatLng) {
+
+          const label = L.marker(labelLatLng, {
+            interactive: false,
+            icon: L.divIcon({
+              className: 'fire-label',
+              html: escapeHtml(name),
+              iconSize: null
+            })
+          });
+
+          fireLayer.addLayer(label);
+
+        }
+
+        layer.bindPopup(`<b>${escapeHtml(name)}</b>`);
+
+      }
+    },
+    'Fire Districts'
   );
 
 }
